@@ -1,0 +1,49 @@
+{
+    "id": "/?source=pwa",
+    "name": "SDN Indonesia",
+    "short_name": "SDN Indonesia",
+    "description": "Portal dan Aplikasi Presensi Siswa Resmi - SDN Indonesia",
+    "start_url": "/?source=pwa",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "background_color": "#FFFFFF",
+    "theme_color": "#0D9488",
+    "prefer_related_applications": false,
+    "categories": [
+        "education",
+        "productivity"
+    ],
+    "icons": [
+        {
+            "src": "/icons/icon-192x192.png?v=1794535178",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/icon-maskable-192x192.png?v=1794535178",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/icons/icon-512x512.png?v=1794535178",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/icon-maskable-512x512.png?v=1794535178",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/storage/school/IeWsASQ4X7zGP5Ak9QiKHuJcZN9DdQJVpuvUzn8b.png?v=1794535178",
+            "sizes": "148x148",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ]
+}

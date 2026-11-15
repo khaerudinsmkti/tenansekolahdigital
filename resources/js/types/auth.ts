@@ -1,0 +1,55 @@
+export type User = {
+    id: number;
+    name: string;
+    email: string;
+    nip?: string | null;
+    role?: 'admin' | 'teacher' | 'principal' | 'publisher' | 'student' | string;
+    is_duty_teacher_today?: boolean;
+    avatar?: string;
+    email_verified_at: string | null;
+    two_factor_enabled?: boolean;
+    created_at: string;
+    updated_at: string;
+    [key: string]: unknown;
+};
+
+export type PendingClassroom = {
+    id: number;
+    name: string;
+    academic_year?: string;
+    students_count: number;
+    recorded_count: number;
+    is_homeroom?: boolean;
+};
+
+export type PendingAttendanceStatus = {
+    needs_attendance: boolean;
+    is_holiday: boolean;
+    holiday_name?: string | null;
+    pending_classes: PendingClassroom[];
+    date: string;
+    formatted_date: string;
+};
+
+export type Auth = {
+    user: User;
+    pending_attendance?: PendingAttendanceStatus | null;
+    permissions?: Record<string, Record<string, boolean>> | string;
+};
+
+export type Passkey = {
+    id: number;
+    name: string;
+    authenticator: string | null;
+    created_at_diff: string;
+    last_used_at_diff: string | null;
+};
+
+export type TwoFactorSetupData = {
+    svg: string;
+    url: string;
+};
+
+export type TwoFactorSecretKey = {
+    secretKey: string;
+};
