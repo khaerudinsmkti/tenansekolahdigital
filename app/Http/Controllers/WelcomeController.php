@@ -8,6 +8,7 @@ use App\Models\News;
 use App\Models\NewsCategory;
 use App\Models\SchoolSetting;
 use App\Models\TeacherProfile;
+use App\Services\ThemeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -16,7 +17,17 @@ use Inertia\Response;
 class WelcomeController extends Controller
 {
     /**
-     * Public Homepage (Beranda Utama): Hero, 4 Pilar, Sambutan Kepala Sekolah, Berita Terkini.
+     * Public Promotional Landing Page (Beranda Utama Aplikasi Sekolah Digital).
+     */
+    public function landing(): Response
+    {
+        return Inertia::render('landing', [
+            'themes' => array_values(ThemeService::getThemes()),
+        ]);
+    }
+
+    /**
+     * Public School Portal (Portal Sekolah: Hero, 4 Pilar, Sambutan Kepala Sekolah, Berita Terkini).
      */
     public function index(): Response
     {

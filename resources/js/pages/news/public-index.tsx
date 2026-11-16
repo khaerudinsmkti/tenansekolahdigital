@@ -12,6 +12,7 @@ import {
     ImageIcon,
     Images,
     Instagram,
+    Layers,
     Youtube,
     Newspaper,
     Plus,

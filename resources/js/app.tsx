@@ -76,6 +76,7 @@ void createInertiaApp({
     },
     layout: (name) => {
         switch (true) {
+            case name === 'landing':
             case name === 'welcome':
             case name === 'profile/public-index':
             case name === 'profile/public-teachers':

@@ -17,7 +17,8 @@ use App\Http\Controllers\TeacherProfileController;
 use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [WelcomeController::class, 'index'])->name('home');
+Route::get('/', [WelcomeController::class, 'landing'])->name('home');
+Route::get('/portal', [WelcomeController::class, 'index'])->name('public.portal');
 Route::get('/profil', [WelcomeController::class, 'profile'])->name('public.profile');
 Route::get('/profil/guru', [WelcomeController::class, 'teacherProfiles'])->name('public.profile.teachers');
 Route::get('/berita', [WelcomeController::class, 'news'])->name('public.news');

@@ -14,6 +14,7 @@ import {
     Newspaper,
     PhoneCall,
     Plus,
+    School,
     Users,
     X,
 } from 'lucide-react';
@@ -69,6 +70,7 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
 
     const isSchoolProfileActive = url === '/profil' || url.startsWith('/profil?');
     const isTeacherProfileActive = url.startsWith('/profil/guru');
+    const isPortalActive = url === '/portal' || url.startsWith('/portal?');
 
     const navLinks: NavLinkItem[] = [
         {
@@ -76,6 +78,12 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
             href: '/',
             icon: Home,
             isActive: url === '/',
+        },
+        {
+            title: 'Portal Sekolah',
+            href: '/portal',
+            icon: School,
+            isActive: isPortalActive,
         },
         {
             title: 'Profil',
@@ -325,6 +333,34 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
 
                         {/* List of remaining menus */}
                         <div className="space-y-2 mt-4">
+                            {/* Portal Sekolah (Welcome) */}
+                            <Link
+                                href="/portal"
+                                onClick={() => setIsOtherDrawerOpen(false)}
+                                className={`flex items-center gap-3.5 rounded-2xl p-3.5 border transition-all ${
+                                    isPortalActive
+                                        ? 'border-[var(--brand-primary,#FF6B35)]/40 bg-[var(--brand-primary-light,#FFF0EB)] text-[var(--brand-primary,#FF6B35)] shadow-xs dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:border-[var(--brand-primary,#FF6B35)]/40 dark:text-white'
+                                        : 'border-gray-100 bg-gray-50/70 hover:bg-gray-100 text-gray-800 dark:border-gray-800 dark:bg-gray-800/40 dark:text-gray-200'
+                                }`}
+                            >
+                                <div
+                                    className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${
+                                        isPortalActive
+                                            ? 'bg-[var(--brand-primary,#FF6B35)] text-white shadow-xs'
+                                            : 'bg-[var(--brand-primary-light,#FFF0EB)] text-[var(--brand-primary,#FF6B35)] dark:bg-gray-800 dark:text-white'
+                                    }`}
+                                >
+                                    <School className="size-5" />
+                                </div>
+                                <div className="flex-1">
+                                    <div className="text-xs font-black">Portal Sekolah</div>
+                                    <div className="text-[10px] text-gray-500 dark:text-gray-400">
+                                        Sambutan Kepala Sekolah, Berita & Galeri Terkini
+                                    </div>
+                                </div>
+                                <ArrowRight className="size-4 text-gray-400" />
+                            </Link>
+
                             {/* Kalender */}
                             <Link
                                 href="/kalender"
@@ -454,8 +490,8 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
                 </div>
             )}
 
-            {/* Mobile Bottom Navigation Bar (5 Menu: Beranda, Profil, Berita, Galeri, Lainnya) */}
-            <nav className="fixed bottom-0 left-0 right-0 z-40 flex h-16 items-center justify-around border-t border-gray-200/90 bg-white/95 px-1.5 pb-safe backdrop-blur-lg md:hidden dark:border-gray-800/90 dark:bg-[#18122B]/95 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
+            {/* Mobile Bottom Navigation Bar (6 Menu: Beranda, Portal, Profil, Berita, Galeri, Lainnya) */}
+            <nav className="fixed bottom-0 left-0 right-0 z-40 flex h-16 items-center justify-around border-t border-gray-200/90 bg-white/95 px-1 pb-safe backdrop-blur-lg md:hidden dark:border-gray-800/90 dark:bg-[#18122B]/95 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
                 {/* 1. Beranda */}
                 <Link
                     href="/"
@@ -466,7 +502,7 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
                     }`}
                 >
                     <div
-                        className={`flex size-8.5 items-center justify-center rounded-xl transition-all ${
+                        className={`flex size-8 items-center justify-center rounded-xl transition-all ${
                             url === '/'
                                 ? 'bg-[var(--brand-primary-light,#FFF0EB)] text-[var(--brand-primary,#FF6B35)] border border-[var(--brand-primary,#FF6B35)]/35 dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:border-[var(--brand-primary,#FF6B35)]/40 dark:text-white scale-105 shadow-2xs'
                                 : 'text-gray-500 dark:text-gray-400'
@@ -474,8 +510,31 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
                     >
                         <Home className="size-4.5" />
                     </div>
-                    <span className={`text-[10px] tracking-tight ${url === '/' ? 'text-[var(--brand-primary,#FF6B35)] font-black' : 'font-bold'}`}>
+                    <span className={`text-[10px] leading-none tracking-tight ${url === '/' ? 'text-[var(--brand-primary,#FF6B35)] font-black' : 'font-bold'}`}>
                         Beranda
+                    </span>
+                </Link>
+
+                {/* 2. Portal Sekolah */}
+                <Link
+                    href="/portal"
+                    className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-1 transition-all active:scale-95 ${
+                        isPortalActive
+                            ? 'font-black text-[var(--brand-primary,#FF6B35)]'
+                            : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                    }`}
+                >
+                    <div
+                        className={`flex size-8 items-center justify-center rounded-xl transition-all ${
+                            isPortalActive
+                                ? 'bg-[var(--brand-primary-light,#FFF0EB)] text-[var(--brand-primary,#FF6B35)] border border-[var(--brand-primary,#FF6B35)]/35 dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:border-[var(--brand-primary,#FF6B35)]/40 dark:text-white scale-105 shadow-2xs'
+                                : 'text-gray-500 dark:text-gray-400'
+                        }`}
+                    >
+                        <School className="size-4.5" />
+                    </div>
+                    <span className={`text-[10px] leading-none tracking-tight ${isPortalActive ? 'text-[var(--brand-primary,#FF6B35)] font-black' : 'font-bold'}`}>
+                        Portal
                     </span>
                 </Link>
 
@@ -548,7 +607,7 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
                     </span>
                 </Link>
 
-                {/* 5. Lainnya (Icon Garis Tiga / Menu) */}
+                {/* 6. Lainnya (Icon Garis Tiga / Menu) */}
                 <button
                     type="button"
                     onClick={() => setIsOtherDrawerOpen(true)}
