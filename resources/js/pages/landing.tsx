@@ -13,6 +13,7 @@ import {
     ChevronDown,
     ClipboardCheck,
     Clock,
+    Crown,
     Download,
     FileSpreadsheet,
     FileText,
@@ -44,6 +45,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { PublicHeader } from '@/components/public-header';
 import { PwaInstallPrompt } from '@/components/pwa-install-prompt';
+import { WhatsAppIcon } from '@/components/whatsapp-share-button';
 import { dashboard, login } from '@/routes';
 
 interface ThemeOption {
@@ -61,6 +63,7 @@ interface ThemeOption {
 interface SchoolProp {
     name?: string;
     logo_url?: string | null;
+    whatsapp?: string | null;
 }
 
 interface AuthProp {
@@ -522,6 +525,90 @@ const ROLES_BENEFITS = [
         ],
     },
 ];
+
+interface PricingPlan {
+    id: string;
+    name: string;
+    subtitle: string;
+    price: string;
+    period: string;
+    badge?: string;
+    isPopular?: boolean;
+    isBestValue?: boolean;
+    features: string[];
+    waMessage: string;
+}
+
+const PRICING_PLANS: PricingPlan[] = [
+    {
+        id: 'website',
+        name: 'Paket Website Sekolah',
+        subtitle: 'Cocok untuk membangun citra & portal informasi resmi sekolah',
+        price: 'Rp 200rb',
+        period: '/tahun',
+        badge: 'Starter',
+        features: [
+            'Portal Website Sekolah Modern & Responsif',
+            'Berita & Pengumuman (Auto Import IG & YouTube)',
+            'Galeri Foto Kegiatan & Lightbox',
+            'Profil Sekolah, Visi Misi & Sambutan Kepsek',
+            'Direktori Foto Guru & Wali Kelas',
+            'Kalender Akademik & Formulir Kontak Aspirasi',
+            'Penggantian Tema Sekolah (10+ Tema) & Dark Mode',
+        ],
+        waMessage:
+            'Halo, saya tertarik untuk bertanya & memesan *Paket Website Sekolah (Rp 200rb/tahun)*. Mohon info lebih lanjut.',
+    },
+    {
+        id: 'website-absensi',
+        name: 'Paket Website + Absensi',
+        subtitle: 'Digitalisasi penuh portal sekolah & presensi siswa harian',
+        price: 'Rp 300rb',
+        period: '/tahun',
+        badge: 'Paling Populer',
+        isPopular: true,
+        features: [
+            'Semua fitur di Paket Website Sekolah',
+            'Input Absensi Harian Cepat (Batch & Quick Update)',
+            'Pelacak Keterlambatan Siswa Otomatis',
+            'Absen Khusus & Izin Pulang Awal',
+            'Rekap Laporan Harian, Bulanan & Semester',
+            'Ekspor Laporan Absensi ke Excel (.xlsx) & PDF',
+            'PWA Installable & Push Notifikasi Pengingat Guru',
+        ],
+        waMessage:
+            'Halo, saya tertarik untuk bertanya & memesan *Paket Website + Absensi Siswa (Rp 300rb/tahun)*. Mohon info lebih lanjut.',
+    },
+    {
+        id: 'all-in-one',
+        name: 'Paket All-in-One Lengkap',
+        subtitle: 'Solusi paripurna hingga level pimpinan & ekstrakurikuler',
+        price: 'Rp 350rb',
+        period: '/tahun',
+        badge: 'Terlengkap',
+        isBestValue: true,
+        features: [
+            'Semua fitur Website Sekolah + Absensi Siswa',
+            'Jurnal Kepala Sekolah (Agenda & Supervisi Privat)',
+            'Ekspor Jurnal Kepala Sekolah ke Excel & PDF',
+            'Laporan Ekstrakurikuler & Roster Anggota',
+            'Alur Persetujuan (Approval) Laporan Ekskul',
+            'Cetak PDF Ekskul + Verifikasi QR Code Terenkripsi',
+            'Matriks Hak Akses, Kenaikan Kelas & Passkey Biometrik',
+        ],
+        waMessage:
+            'Halo, saya tertarik untuk bertanya & memesan *Paket All-in-One Lengkap (Rp 350rb/tahun)*. Mohon info lebih lanjut.',
+    },
+];
+
+function buildWhatsAppUrl(rawPhone: string | null | undefined, message: string): string {
+    const digitsOnly = (rawPhone || '').replace(/\D/g, '');
+    let normalized = digitsOnly || '6281234567890';
+    if (normalized.startsWith('0')) {
+        normalized = `62${normalized.slice(1)}`;
+    }
+    return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
+}
 
 const FAQS = [
     {
@@ -1186,6 +1273,138 @@ export default function Landing({ themes = [] }: LandingProps) {
                 </div>
             </section>
 
+            {/* 4.5 PRICING PLANS SECTION */}
+            <section
+                id="paket-harga"
+                className="relative overflow-hidden border-t border-gray-200/70 bg-gradient-to-b from-[#FFFBF7] via-white to-[#FFFBF7] py-14 sm:py-20 dark:border-[#2D234A] dark:from-[#130E24] dark:via-[#18122B] dark:to-[#130E24]"
+            >
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-12">
+                    <div className="mx-auto max-w-3xl text-center space-y-3">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3.5 py-1 text-xs font-extrabold text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300">
+                            <Crown className="size-3.5" />
+                            Pilihan Paket & Investasi Terjangkau
+                        </span>
+                        <h2 className="text-2xl font-black tracking-tight text-gray-900 sm:text-4xl dark:text-white">
+                            Pilih Paket yang Sesuai dengan Kebutuhan Sekolah Anda
+                        </h2>
+                        <p className="text-sm text-gray-600 sm:text-base dark:text-gray-300">
+                            Biaya tahunan transparan tanpa biaya tersembunyi per siswa. Mulai dari
+                            website sekolah hingga sistem manajemen lengkap.
+                        </p>
+                    </div>
+
+                    <div className="mt-12 grid items-stretch gap-6 lg:grid-cols-3 lg:gap-7">
+                        {PRICING_PLANS.map((plan) => {
+                            const waHref = buildWhatsAppUrl(school?.whatsapp, plan.waMessage);
+                            return (
+                                <div
+                                    key={plan.id}
+                                    className={`relative flex flex-col justify-between rounded-[28px] p-6 sm:p-8 transition-all duration-300 hover:-translate-y-1 ${
+                                        plan.isPopular
+                                            ? 'border-2 border-[var(--brand-primary,#FF6B35)] bg-white shadow-2xl ring-4 ring-[var(--brand-primary,#FF6B35)]/10 dark:bg-[#1E1636]'
+                                            : plan.isBestValue
+                                              ? 'border-2 border-violet-500/70 bg-gradient-to-b from-white to-violet-50/40 shadow-xl dark:from-[#18122B] dark:to-[#221740]'
+                                              : 'border border-gray-200/90 bg-white shadow-sm hover:shadow-lg dark:border-[#2D234A] dark:bg-[#18122B]'
+                                    }`}
+                                >
+                                    {/* Top Floating Badge */}
+                                    {plan.badge && (
+                                        <div className="mb-4 flex items-center justify-between">
+                                            <span
+                                                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-wide ${
+                                                    plan.isPopular
+                                                        ? 'bg-[var(--brand-primary,#FF6B35)] text-white shadow-brand'
+                                                        : plan.isBestValue
+                                                          ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-sm'
+                                                          : 'bg-gray-100 text-gray-700 dark:bg-[#231B3D] dark:text-gray-300'
+                                                }`}
+                                            >
+                                                {plan.isPopular && <Sparkles className="size-3" />}
+                                                {plan.isBestValue && <Crown className="size-3" />}
+                                                {plan.badge}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    <div>
+                                        <h3 className="text-xl font-black text-gray-900 dark:text-white">
+                                            {plan.name}
+                                        </h3>
+                                        <p className="mt-1.5 min-h-[40px] text-xs leading-relaxed text-gray-600 sm:text-sm dark:text-gray-300">
+                                            {plan.subtitle}
+                                        </p>
+
+                                        {/* Price Display */}
+                                        <div className="my-6 flex items-baseline gap-1.5 border-y border-gray-100 py-5 dark:border-[#2D234A]">
+                                            <span
+                                                className={`text-3xl font-black tracking-tight sm:text-4xl ${
+                                                    plan.isPopular
+                                                        ? 'text-[var(--brand-primary,#FF6B35)]'
+                                                        : plan.isBestValue
+                                                          ? 'text-violet-600 dark:text-violet-400'
+                                                          : 'text-gray-900 dark:text-white'
+                                                }`}
+                                            >
+                                                {plan.price}
+                                            </span>
+                                            <span className="text-sm font-bold text-gray-500 dark:text-gray-400">
+                                                {plan.period}
+                                            </span>
+                                        </div>
+
+                                        {/* Feature Checklist */}
+                                        <ul className="space-y-3">
+                                            {plan.features.map((feat) => (
+                                                <li
+                                                    key={feat}
+                                                    className="flex items-start gap-2.5 text-xs font-semibold leading-relaxed text-gray-700 sm:text-sm dark:text-gray-200"
+                                                >
+                                                    <CheckCircle2
+                                                        className={`mt-0.5 size-4 shrink-0 ${
+                                                            plan.isPopular
+                                                                ? 'text-[var(--brand-primary,#FF6B35)]'
+                                                                : plan.isBestValue
+                                                                  ? 'text-violet-500'
+                                                                  : 'text-emerald-500'
+                                                        }`}
+                                                    />
+                                                    <span>{feat}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+
+                                    {/* Card CTA */}
+                                    <div className="mt-8 pt-2">
+                                        <Button
+                                            asChild
+                                            size="lg"
+                                            variant={plan.isPopular ? 'primary' : 'outline'}
+                                            className={`h-12 w-full rounded-2xl text-sm font-black transition-all ${
+                                                plan.isPopular
+                                                    ? 'shadow-brand'
+                                                    : plan.isBestValue
+                                                      ? 'border-violet-500 bg-violet-600 text-white hover:bg-violet-700 hover:text-white shadow-md shadow-violet-500/20'
+                                                      : 'border-2 border-gray-200 hover:border-[var(--brand-primary,#FF6B35)] hover:bg-[var(--brand-primary-light,#FFF0EB)] hover:text-[var(--brand-primary,#FF6B35)] dark:border-[#2D234A] dark:hover:bg-[#231B3D]'
+                                            }`}
+                                        >
+                                            <a
+                                                href={waHref}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                <WhatsAppIcon className="mr-2 size-4" />
+                                                Pesan via WhatsApp
+                                            </a>
+                                        </Button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </section>
+
             {/* 5. FAQ SECTION */}
             <section className="border-t border-gray-200/70 bg-white/60 py-14 sm:py-18 dark:border-[#2D234A] dark:bg-[#18122B]/40">
                 <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
@@ -1304,6 +1523,27 @@ export default function Landing({ themes = [] }: LandingProps) {
                     </div>
                 </div>
             </footer>
+
+            {/* Floating WhatsApp Button (Pojok Kanan Bawah) */}
+            <a
+                href={buildWhatsAppUrl(
+                    school?.whatsapp,
+                    `Halo, saya ingin bertanya mengenai aplikasi ${schoolName} dan paket harganya.`,
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Tanya via WhatsApp"
+                title="Tanya perihal aplikasi via WhatsApp"
+                className="fixed bottom-34 right-4 md:bottom-20 md:right-6 z-40 group flex items-center gap-2.5 rounded-full bg-gradient-to-tr from-[#128C7E] to-[#25D366] px-4 py-3 text-white shadow-xl shadow-emerald-500/30 ring-2 ring-white/90 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-emerald-500/40 active:scale-95 dark:ring-[#18122B]"
+            >
+                <span className="relative flex items-center justify-center">
+                    <span className="absolute inline-flex size-full animate-ping rounded-full bg-white/40 opacity-75" />
+                    <WhatsAppIcon className="relative size-5" />
+                </span>
+                <span className="hidden sm:inline text-xs font-black tracking-wide">
+                    Tanya Aplikasi
+                </span>
+            </a>
         </div>
     );
 }
