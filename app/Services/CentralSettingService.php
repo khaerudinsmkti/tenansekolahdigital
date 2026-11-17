@@ -107,4 +107,33 @@ class CentralSettingService
         $data['billing_email'] = $billing['email'];
         self::writeAll($data);
     }
+
+    /**
+     * @return array{
+     *     name: string,
+     *     logo_path: string|null,
+     *     logo_url: string|null
+     * }
+     */
+    public static function getBrandingSettings(): array
+    {
+        $data = self::readAll();
+        $logoPath = is_string($data['logo_path'] ?? null) && $data['logo_path'] !== ''
+            ? $data['logo_path']
+            : null;
+
+        return [
+            'name' => (string) ($data['app_name'] ?? config('app.name', 'SekolahDigital')),
+            'logo_path' => $logoPath,
+            'logo_url' => $logoPath ? '/storage/' . ltrim($logoPath, '/') : null,
+        ];
+    }
+
+    public static function setBrandingSettings(string $name, ?string $logoPath): void
+    {
+        $data = self::readAll();
+        $data['app_name'] = $name;
+        $data['logo_path'] = $logoPath;
+        self::writeAll($data);
+    }
 }

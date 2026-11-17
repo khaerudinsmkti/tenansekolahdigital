@@ -39,12 +39,14 @@ class HandleInertiaRequests extends Middleware
         $user = $isTenant ? $request->user() : null;
         $isDutyToday = $user ? $user->isDutyTeacherToday() : false;
         $school = $isTenant ? \App\Models\SchoolSetting::getSetting() : null;
+        $centralBranding = ! $isTenant ? \App\Services\CentralSettingService::getBrandingSettings() : null;
         $centralSchool = ! $isTenant ? [
-            'name' => config('app.name', 'SekolahDigital'),
+            'name' => $centralBranding['name'],
+            'logo_url' => $centralBranding['logo_url'],
             'theme_color' => \App\Services\CentralSettingService::getThemeColor(),
             'theme_data' => \App\Services\CentralSettingService::getThemeData(),
         ] : null;
-        $schoolName = $school?->name ?: config('app.name', 'AbsensiKu SD');
+        $schoolName = $school?->name ?: ($centralBranding['name'] ?? config('app.name', 'AbsensiKu SD'));
 
         $tenantLicense = $isTenant && tenant() instanceof \App\Models\Tenant
             ? \App\Services\TenantLicenseService::getStatus(tenant())

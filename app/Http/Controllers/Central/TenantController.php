@@ -14,6 +14,7 @@ use App\Services\ThemeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -85,6 +86,7 @@ class TenantController extends Controller
             'themes' => array_values(ThemeService::getThemes()),
             'currentTheme' => CentralSettingService::getThemeColor(),
             'billingSettings' => CentralSettingService::getBillingSettings(),
+            'brandingSettings' => CentralSettingService::getBrandingSettings(),
             'tutorials' => CentralTutorial::query()->orderBy('order')->latest('id')->get(),
             'tutorialRoles' => Tutorial::getAvailableRoles(),
         ]);
@@ -118,6 +120,36 @@ class TenantController extends Controller
         CentralSettingService::setBillingSettings($validated);
 
         return back()->with('success', 'Pengaturan rekening, nomor HP/WhatsApp, dan email admin central berhasil disimpan.');
+    }
+
+    public function updateBrandingSettings(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'logo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp,svg', 'max:2048'],
+            'remove_logo' => ['nullable', 'boolean'],
+        ]);
+
+        $current = CentralSettingService::getBrandingSettings();
+        $logoPath = $current['logo_path'];
+
+        if ($request->boolean('remove_logo')) {
+            if ($logoPath && Storage::disk('public')->exists($logoPath)) {
+                Storage::disk('public')->delete($logoPath);
+            }
+            $logoPath = null;
+        }
+
+        if ($request->hasFile('logo')) {
+            if ($logoPath && Storage::disk('public')->exists($logoPath)) {
+                Storage::disk('public')->delete($logoPath);
+            }
+            $logoPath = $request->file('logo')->store('central', 'public');
+        }
+
+        CentralSettingService::setBrandingSettings($validated['name'], $logoPath);
+
+        return back()->with('success', 'Logo dan nama sekolah/aplikasi central berhasil disimpan.');
     }
 
     public function store(Request $request): RedirectResponse

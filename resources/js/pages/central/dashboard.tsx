@@ -9,6 +9,7 @@ import {
     ExternalLink,
     Globe,
     Home,
+    Image as ImageIcon,
     Layers,
     LogOut,
     Palette,
@@ -16,11 +17,13 @@ import {
     PlayCircle,
     Plus,
     RefreshCw,
+    School,
     Search,
     Server,
     ShieldCheck,
     Sparkles,
     Trash2,
+    Upload,
     UserPlus,
     Users,
     X,
@@ -142,6 +145,11 @@ interface CentralDashboardProps {
         account_name: string;
         email: string;
     };
+    brandingSettings: {
+        name: string;
+        logo_path: string | null;
+        logo_url: string | null;
+    };
     tutorials: CentralTutorialItem[];
     tutorialRoles: Record<string, TutorialRoleOption>;
 }
@@ -163,6 +171,7 @@ export default function CentralDashboard({
     themes = [],
     currentTheme = 'sd-orange',
     billingSettings,
+    brandingSettings,
     tutorials = [],
     tutorialRoles = {},
 }: CentralDashboardProps) {
@@ -179,11 +188,24 @@ export default function CentralDashboard({
     );
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const [activeMenu, setActiveMenu] = useState<
-        'tenants' | 'tutorials' | 'theme' | 'billing'
+        'tenants' | 'tutorials' | 'branding' | 'theme' | 'billing'
     >('tenants');
     const [selectedTheme, setSelectedTheme] = useState<string>(currentTheme);
     const [themeLevelFilter, setThemeLevelFilter] = useState<string>('ALL');
     const [savingTheme, setSavingTheme] = useState(false);
+
+    const brandingForm = useForm<{
+        name: string;
+        logo: File | null;
+        remove_logo: boolean;
+    }>({
+        name: brandingSettings?.name ?? 'SekolahDigital',
+        logo: null,
+        remove_logo: false,
+    });
+    const [logoPreview, setLogoPreview] = useState<string | null>(
+        brandingSettings?.logo_url ?? null,
+    );
 
     const billingForm = useForm({
         whatsapp: billingSettings?.whatsapp ?? '6281234567890',
@@ -560,6 +582,18 @@ export default function CentralDashboard({
         );
     };
 
+    const handleBrandingSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        brandingForm.post('/admin/branding-settings', {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                brandingForm.setData('logo', null);
+                brandingForm.setData('remove_logo', false);
+            },
+        });
+    };
+
     const handleBillingSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         billingForm.post('/admin/billing-settings', {
@@ -760,16 +794,24 @@ export default function CentralDashboard({
                 >
                     {/* Brand Header */}
                     <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4.5 dark:border-white/[0.06]">
-                        <div className="flex items-center gap-3">
-                            <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#FF8552] to-[#FFB347] text-white shadow-lg shadow-[#FF6B35]/30 ring-1 ring-white/25">
-                                <AppLogoIcon className="h-5 w-5 text-white" />
-                            </div>
-                            <div>
+                        <div className="flex items-center gap-3 min-w-0">
+                            {brandingSettings?.logo_url ? (
+                                <img
+                                    src={brandingSettings.logo_url}
+                                    alt={brandingSettings.name}
+                                    className="h-10 w-10 shrink-0 rounded-2xl border border-gray-200 bg-white object-contain p-1 shadow-sm dark:border-white/10"
+                                />
+                            ) : (
+                                <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#FF8552] to-[#FFB347] text-white shadow-lg shadow-[#FF6B35]/30 ring-1 ring-white/25">
+                                    <AppLogoIcon className="h-5 w-5 text-white" />
+                                </div>
+                            )}
+                            <div className="min-w-0">
                                 <div className="flex items-center gap-1.5">
-                                    <span className="text-sm font-black tracking-tight text-gray-900 dark:text-white">
-                                        Central Hub
+                                    <span className="truncate text-sm font-black tracking-tight text-gray-900 dark:text-white">
+                                        {brandingSettings?.name || 'Central Hub'}
                                     </span>
-                                    <span className="rounded-md bg-[#FFF0EB] px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-[#FF6B35] dark:bg-[#FF6B35]/20 dark:text-[#FF9E75]">
+                                    <span className="shrink-0 rounded-md bg-[#FFF0EB] px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-[#FF6B35] dark:bg-[#FF6B35]/20 dark:text-[#FF9E75]">
                                         Admin
                                     </span>
                                 </div>
@@ -864,6 +906,28 @@ export default function CentralDashboard({
                             <div className="px-3 pb-1.5 text-[10px] font-extrabold uppercase tracking-widest text-gray-400 dark:text-gray-500">
                                 Kustomisasi & Billing
                             </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setActiveMenu('branding');
+                                    setMobileSidebarOpen(false);
+                                }}
+                                className={`group relative flex w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-[13px] transition-all duration-200 ${
+                                    activeMenu === 'branding'
+                                        ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF8A5B] font-bold text-white shadow-md shadow-[#FF6B35]/25'
+                                        : 'font-semibold text-gray-600 hover:bg-gray-100/80 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.06] dark:hover:text-white'
+                                }`}
+                            >
+                                <School
+                                    className={`h-4 w-4 transition-transform duration-200 group-hover:scale-105 ${
+                                        activeMenu === 'branding'
+                                            ? 'text-white'
+                                            : 'text-gray-400 group-hover:text-[#FF6B35] dark:text-gray-400'
+                                    }`}
+                                />
+                                <span>Logo & Nama</span>
+                            </button>
+
                             <button
                                 type="button"
                                 onClick={() => {
@@ -991,9 +1055,11 @@ export default function CentralDashboard({
                                                 ? 'Sekolah & Domain'
                                                 : activeMenu === 'tutorials'
                                                   ? 'Video Tutorial Global'
-                                                  : activeMenu === 'theme'
-                                                    ? 'Tema Landing Page'
-                                                    : 'Billing & Kontak Admin'}
+                                                  : activeMenu === 'branding'
+                                                    ? 'Logo & Nama Sekolah'
+                                                    : activeMenu === 'theme'
+                                                      ? 'Tema Landing Page'
+                                                      : 'Billing & Kontak Admin'}
                                         </h1>
                                         <Badge
                                             variant="secondary"
@@ -1007,9 +1073,11 @@ export default function CentralDashboard({
                                             ? 'Kelola subdomain, custom domain, lisensi, & database sekolah dari satu tempat'
                                             : activeMenu === 'tutorials'
                                               ? 'Sinkronisasi panduan video YouTube ke seluruh portal sekolah'
-                                              : activeMenu === 'theme'
-                                                ? 'Atur identitas visual & palet warna landing page utama central'
-                                                : 'Konfigurasi informasi pembayaran, WhatsApp, & email layanan'}
+                                              : activeMenu === 'branding'
+                                                ? 'Atur logo dan nama utama yang tampil pada landing page & header central'
+                                                : activeMenu === 'theme'
+                                                  ? 'Atur identitas visual & palet warna landing page utama central'
+                                                  : 'Konfigurasi informasi pembayaran, WhatsApp, & email layanan'}
                                     </p>
                                 </div>
                             </div>
@@ -1379,6 +1447,193 @@ export default function CentralDashboard({
                                                     ? 'Menyimpan...'
                                                     : 'Simpan Pengaturan Billing'}
                                             </Button>
+                                        </div>
+                                    </form>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    ) : activeMenu === 'branding' ? (
+                        <div className="space-y-6">
+                            <Card className="rounded-2xl border border-gray-200/80 bg-white/95 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.04)] dark:border-white/[0.08] dark:bg-[#18122B]/90">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-lg font-black">
+                                        <School className="h-5 w-5 text-[var(--brand-primary,#FF6B35)]" />
+                                        Pengaturan Logo & Nama Sekolah Central
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Atur nama dan logo resmi yang akan ditampilkan di header, footer, dan landing page utama central.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <form
+                                        onSubmit={handleBrandingSubmit}
+                                        className="grid gap-6 lg:grid-cols-12"
+                                    >
+                                        <div className="space-y-5 lg:col-span-7">
+                                            <div className="space-y-2">
+                                                <Label
+                                                    htmlFor="central-brand-name"
+                                                    className="text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300"
+                                                >
+                                                    Nama Sekolah / Aplikasi Central
+                                                </Label>
+                                                <Input
+                                                    id="central-brand-name"
+                                                    value={brandingForm.data.name}
+                                                    onChange={(e) =>
+                                                        brandingForm.setData(
+                                                            'name',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Contoh: Sekolah Digital Indonesia"
+                                                    className="h-11 rounded-xl"
+                                                    required
+                                                />
+                                                {brandingForm.errors.name && (
+                                                    <p className="text-xs text-rose-500">
+                                                        {brandingForm.errors.name}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label className="text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                                                    Logo Sekolah / Brand
+                                                </Label>
+                                                <div className="flex flex-col gap-4 rounded-2xl border-2 border-dashed border-gray-200/90 bg-gray-50/60 p-5 sm:flex-row sm:items-center dark:border-white/10 dark:bg-[#110C20]/60">
+                                                    <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-white p-2 shadow-xs dark:border-white/10 dark:bg-[#18122B]">
+                                                        {logoPreview ? (
+                                                            <img
+                                                                src={logoPreview}
+                                                                alt="Preview Logo"
+                                                                className="h-full w-full object-contain"
+                                                            />
+                                                        ) : (
+                                                            <ImageIcon className="h-8 w-8 text-gray-300 dark:text-gray-600" />
+                                                        )}
+                                                    </div>
+
+                                                    <div className="flex-1 space-y-2">
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <label
+                                                                htmlFor="central-logo-upload"
+                                                                className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-xs font-bold text-gray-700 shadow-2xs transition-colors hover:border-[#FF6B35]/50 hover:text-[#FF6B35] dark:border-white/10 dark:bg-[#18122B] dark:text-gray-200"
+                                                            >
+                                                                <Upload className="h-3.5 w-3.5" />
+                                                                Pilih File Logo
+                                                            </label>
+                                                            <input
+                                                                id="central-logo-upload"
+                                                                type="file"
+                                                                accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                                                                className="hidden"
+                                                                onChange={(e) => {
+                                                                    const file =
+                                                                        e.target
+                                                                            .files?.[0];
+                                                                    if (file) {
+                                                                        brandingForm.setData(
+                                                                            'logo',
+                                                                            file,
+                                                                        );
+                                                                        brandingForm.setData(
+                                                                            'remove_logo',
+                                                                            false,
+                                                                        );
+                                                                        setLogoPreview(
+                                                                            URL.createObjectURL(
+                                                                                file,
+                                                                            ),
+                                                                        );
+                                                                    }
+                                                                }}
+                                                            />
+
+                                                            {logoPreview && (
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    className="rounded-xl border-rose-200 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:border-rose-900/50 dark:text-rose-400 dark:hover:bg-rose-950/40"
+                                                                    onClick={() => {
+                                                                        brandingForm.setData(
+                                                                            'logo',
+                                                                            null,
+                                                                        );
+                                                                        brandingForm.setData(
+                                                                            'remove_logo',
+                                                                            true,
+                                                                        );
+                                                                        setLogoPreview(
+                                                                            null,
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    <Trash2 className="mr-1 h-3.5 w-3.5" />
+                                                                    Hapus Logo
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                                                            Format: PNG, JPG, WEBP, atau SVG (Maks. 2MB). Disarankan rasio 1:1 dengan latar transparan.
+                                                        </p>
+                                                        {brandingForm.errors.logo && (
+                                                            <p className="text-xs text-rose-500">
+                                                                {brandingForm.errors.logo}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="pt-2">
+                                                <Button
+                                                    type="submit"
+                                                    variant="primary"
+                                                    disabled={brandingForm.processing}
+                                                    className="rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#FF8A5B] px-5 font-bold text-white shadow-md shadow-[#FF6B35]/25"
+                                                >
+                                                    {brandingForm.processing
+                                                        ? 'Menyimpan...'
+                                                        : 'Simpan Logo & Nama'}
+                                                </Button>
+                                            </div>
+                                        </div>
+
+                                        {/* Live Preview Box */}
+                                        <div className="lg:col-span-5">
+                                            <div className="rounded-2xl border border-gray-200/90 bg-gray-50/80 p-5 dark:border-white/10 dark:bg-[#110C20]/70">
+                                                <div className="mb-3 text-[11px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                                    Pratinjau Tampilan Header
+                                                </div>
+                                                <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-xs dark:border-white/10 dark:bg-[#18122B]">
+                                                    <div className="flex items-center gap-3 min-w-0">
+                                                        {logoPreview ? (
+                                                            <img
+                                                                src={logoPreview}
+                                                                alt="Logo Preview"
+                                                                className="h-10 w-10 shrink-0 rounded-xl border border-gray-200 bg-white object-contain p-1 dark:border-white/10"
+                                                            />
+                                                        ) : (
+                                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-[#FF6B35] to-[#FF8C5A] text-white shadow-sm">
+                                                                <School className="h-5 w-5" />
+                                                            </div>
+                                                        )}
+                                                        <div className="min-w-0">
+                                                            <div className="truncate text-sm font-black text-gray-900 dark:text-white">
+                                                                {brandingForm.data.name || 'SekolahDigital'}
+                                                            </div>
+                                                            <div className="text-[11px] font-semibold text-gray-400">
+                                                                Portal Resmi Central
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <span className="rounded-lg bg-[#FFF0EB] px-2.5 py-1 text-[10px] font-bold text-[#FF6B35] dark:bg-[#FF6B35]/20 dark:text-[#FF9E75]">
+                                                        Aktif
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </form>
                                 </CardContent>
