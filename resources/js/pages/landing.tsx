@@ -904,7 +904,7 @@ export default function Landing({ themes = [] }: LandingProps) {
                                 className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
                                     isActive
                                         ? 'bg-[var(--brand-primary,#FF6B35)] text-white shadow-brand scale-[1.02]'
-                                        : 'border border-gray-200 bg-white text-gray-700 hover:border-[var(--brand-primary,#FF6B35)]/40 hover:text-[var(--brand-primary,#FF6B35)] dark:border-[#2D234A] dark:bg-[#18122B] dark:text-gray-200'
+                                        : 'border-2 border-gray-200/90 bg-white text-gray-700 shadow-2xs hover:border-[var(--brand-primary,#FF6B35)]/50 hover:text-[var(--brand-primary,#FF6B35)] dark:border-[#2D234A] dark:bg-[#18122B] dark:text-gray-200 dark:hover:border-[var(--brand-primary,#FF6B35)]/50'
                                 }`}
                             >
                                 <Icon className="size-4" />
@@ -916,8 +916,8 @@ export default function Landing({ themes = [] }: LandingProps) {
                 </div>
 
                 {/* Active Category Content */}
-                <div className="mt-8 rounded-[28px] border border-gray-200/80 bg-white p-6 shadow-sm sm:p-8 lg:p-10 dark:border-[#2D234A] dark:bg-[#18122B]">
-                    <div className="mb-8 flex flex-col gap-3 border-b border-gray-100 pb-6 md:flex-row md:items-end md:justify-between dark:border-[#2D234A]">
+                <div className="mt-8 rounded-[28px] border-2 border-gray-200/90 bg-gradient-to-b from-gray-50/70 via-white to-gray-50/40 p-6 shadow-sm sm:p-8 lg:p-10 dark:border-[#2D234A] dark:bg-gradient-to-b dark:from-[#18122B] dark:to-[#120C22]">
+                    <div className="mb-8 flex flex-col gap-3 border-b border-gray-200/80 pb-6 md:flex-row md:items-end md:justify-between dark:border-[#2D234A]">
                         <div className="max-w-2xl space-y-2">
                             <div
                                 className={`inline-flex items-center gap-2 rounded-xl bg-gradient-to-r ${activeCategory.accentClass} px-3 py-1 text-xs font-black text-white shadow-xs`}
@@ -938,7 +938,7 @@ export default function Landing({ themes = [] }: LandingProps) {
                                 asChild
                                 variant="outline"
                                 size="sm"
-                                className="shrink-0 rounded-xl border-[var(--brand-primary,#FF6B35)]/40 text-xs font-extrabold text-[var(--brand-primary,#FF6B35)] hover:bg-[var(--brand-primary-light,#FFF0EB)]"
+                                className="shrink-0 rounded-xl border-2 border-[var(--brand-primary,#FF6B35)]/40 text-xs font-extrabold text-[var(--brand-primary,#FF6B35)] hover:bg-[var(--brand-primary-light,#FFF0EB)]"
                             >
                                 <Link href="/portal">
                                     Coba Portal Sekolah Sekarang
@@ -954,20 +954,25 @@ export default function Landing({ themes = [] }: LandingProps) {
                             return (
                                 <div
                                     key={item.title}
-                                    className="group flex flex-col justify-between rounded-2xl border border-gray-100 bg-gray-50/60 p-5 transition-all hover:-translate-y-0.5 hover:border-[var(--brand-primary,#FF6B35)]/35 hover:bg-white hover:shadow-md dark:border-[#2D234A] dark:bg-[#130E24]/70 dark:hover:bg-[#1F1738]"
+                                    className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border-2 border-gray-200/90 bg-white p-5 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:border-[var(--brand-primary,#FF6B35)] hover:shadow-xl hover:shadow-[var(--brand-primary,#FF6B35)]/10 dark:border-white/10 dark:bg-[#130E24] dark:hover:border-[var(--brand-primary,#FF6B35)]/80 dark:hover:bg-[#17112D] dark:hover:shadow-black/40"
                                 >
+                                    {/* Accent line on hover */}
+                                    <div
+                                        className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${activeCategory.accentClass} opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
+                                    />
+
                                     <div>
-                                        <div className="mb-3 flex items-start justify-between gap-2">
-                                            <div className="flex size-11 items-center justify-center rounded-2xl bg-[var(--brand-primary-light,#FFF0EB)] text-[var(--brand-primary,#FF6B35)] transition-transform group-hover:scale-105 dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:text-orange-300">
+                                        <div className="mb-3.5 flex items-start justify-between gap-2">
+                                            <div className="flex size-11 items-center justify-center rounded-2xl border border-[var(--brand-primary,#FF6B35)]/15 bg-[var(--brand-primary-light,#FFF0EB)] text-[var(--brand-primary,#FF6B35)] transition-all duration-300 group-hover:scale-105 group-hover:shadow-xs dark:border-[var(--brand-primary,#FF6B35)]/30 dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:text-orange-300">
                                                 <ItemIcon className="size-5" />
                                             </div>
                                             {item.badge && (
-                                                <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-black text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                                                <span className="rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-emerald-700 shadow-2xs dark:border-emerald-800/60 dark:bg-emerald-950/80 dark:text-emerald-300">
                                                     {item.badge}
                                                 </span>
                                             )}
                                         </div>
-                                        <h4 className="text-base font-black text-gray-900 dark:text-white">
+                                        <h4 className="text-base font-black text-gray-900 transition-colors group-hover:text-[var(--brand-primary,#FF6B35)] dark:text-white dark:group-hover:text-orange-300">
                                             {item.title}
                                         </h4>
                                         <p className="mt-1.5 text-xs leading-relaxed text-gray-600 sm:text-sm dark:text-gray-300">
@@ -975,14 +980,14 @@ export default function Landing({ themes = [] }: LandingProps) {
                                         </p>
                                     </div>
 
-                                    <ul className="mt-4 space-y-1.5 border-t border-gray-200/70 pt-3 dark:border-[#2D234A]">
+                                    <ul className="mt-5 space-y-2 border-t border-gray-100 pt-3.5 dark:border-white/10">
                                         {item.highlights.map((hl) => (
                                             <li
                                                 key={hl}
-                                                className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300"
+                                                className="flex items-start gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300"
                                             >
-                                                <CheckCircle2 className="size-3.5 shrink-0 text-emerald-500" />
-                                                <span>{hl}</span>
+                                                <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-emerald-500" />
+                                                <span className="leading-tight">{hl}</span>
                                             </li>
                                         ))}
                                     </ul>

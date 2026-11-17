@@ -54,9 +54,35 @@ class HandleInertiaRequests extends Middleware
             && $tenantLicense['days_remaining'] !== null
             && $tenantLicense['days_remaining'] <= 30;
 
+        $centralUrl = null;
+        if ($isTenant) {
+            $requestHost = $request->getHost();
+            $centralDomains = config('tenancy.central_domains', ['localhost', '127.0.0.1']);
+            $matchedCentral = null;
+            foreach ($centralDomains as $cd) {
+                $cdClean = trim((string) $cd);
+                if ($cdClean !== '' && str_ends_with($requestHost, '.' . $cdClean)) {
+                    $matchedCentral = $cdClean;
+                    break;
+                }
+            }
+            $targetDomain = $matchedCentral ?: ($centralDomains[0] ?? null);
+            if ($targetDomain) {
+                $scheme = $request->getScheme();
+                $port = $request->getPort();
+                $portSuffix = ($port && ! in_array($port, [80, 443])) ? ':' . $port : '';
+                $centralUrl = "{$scheme}://{$targetDomain}{$portSuffix}";
+            } else {
+                $centralUrl = config('app.url', '/');
+            }
+        } else {
+            $centralUrl = url('/');
+        }
+
         return [
             ...parent::share($request),
             'isCentral' => ! $isTenant,
+            'centralUrl' => $centralUrl,
             'centralAdminAuthenticated' => ! $isTenant && (bool) $request->session()->get('central_admin_authenticated', false),
             'tenantLicense' => $tenantLicense,
             'centralBilling' => $isLicenseExpiringSoon ? \App\Services\CentralSettingService::getBillingSettings() : null,

@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { PublicHeader } from '@/components/public-header';
+import { PublicFooter } from '@/components/public-footer';
 import { PwaInstallPrompt } from '@/components/pwa-install-prompt';
 
 interface ContactInfoProp {
@@ -409,13 +410,7 @@ export default function PublicContactIndex({ contactInfo }: PublicContactProps) 
                 </main>
 
                 {/* Footer */}
-                <footer className="hidden md:block border-t border-[#E8E8E8] bg-white/70 py-6 text-center text-xs text-[#6B7280] backdrop-blur-md dark:border-[#2D234A] dark:bg-[#18122B]/70 dark:text-[#9CA3AF]">
-                    <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 sm:flex-row">
-                        <div>
-                            &copy; {new Date().getFullYear()} {schoolName}. All rights reserved.
-                        </div>
-                    </div>
-                </footer>
+                <PublicFooter schoolName={schoolName} />
 
                 <PwaInstallPrompt />
             </div>

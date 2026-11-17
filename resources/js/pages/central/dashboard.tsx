@@ -743,7 +743,7 @@ export default function CentralDashboard({
             <Head title="Central Admin — Manajemen Subdomain & Sekolah" />
             <Toaster position="top-right" richColors />
 
-            <div className="flex h-screen overflow-hidden bg-[#FFFBF7] text-[#1A1A2E] dark:bg-[#130E24] dark:text-white">
+            <div className="flex h-screen overflow-hidden bg-[#F6F7FB] text-[#1A1A2E] dark:bg-[#0E0A1A] dark:text-white">
                 {/* Mobile Sidebar Backdrop */}
                 {mobileSidebarOpen && (
                     <div
@@ -752,134 +752,216 @@ export default function CentralDashboard({
                     />
                 )}
 
-                {/* Central Admin Sidebar (tampil setelah login, tetap fix saat konten di-scroll) */}
+                {/* Central Admin Sidebar */}
                 <aside
-                    className={`fixed inset-y-0 left-0 z-50 flex h-full w-64 shrink-0 flex-col border-r border-[#E8E8E8] bg-white/95 backdrop-blur-xl transition-transform duration-200 lg:static lg:translate-x-0 dark:border-[#2D234A] dark:bg-[#18122B]/95 ${
+                    className={`fixed inset-y-0 left-0 z-50 flex h-full w-[272px] shrink-0 flex-col border-r border-gray-200/80 bg-white/95 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.06)] backdrop-blur-2xl transition-transform duration-300 ease-out lg:static lg:translate-x-0 dark:border-white/[0.08] dark:bg-[#151026]/95 ${
                         mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
                     }`}
                 >
-                    <div className="flex items-center justify-between border-b border-[#E8E8E8] px-5 py-4 dark:border-[#2D234A]">
+                    {/* Brand Header */}
+                    <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4.5 dark:border-white/[0.06]">
                         <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-[#FF6B35] to-[#FFE66D] text-white shadow-md shadow-[#FF6B35]/25">
+                            <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#FF8552] to-[#FFB347] text-white shadow-lg shadow-[#FF6B35]/30 ring-1 ring-white/25">
                                 <AppLogoIcon className="h-5 w-5 text-white" />
                             </div>
                             <div>
-                                <div className="text-sm font-black tracking-tight text-gray-900 dark:text-white">
-                                    Central Hub
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-sm font-black tracking-tight text-gray-900 dark:text-white">
+                                        Central Hub
+                                    </span>
+                                    <span className="rounded-md bg-[#FFF0EB] px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-[#FF6B35] dark:bg-[#FF6B35]/20 dark:text-[#FF9E75]">
+                                        Admin
+                                    </span>
                                 </div>
-                                <div className="text-[11px] font-semibold text-[#FF6B35] dark:text-[#FF8C5A]">
-                                    Multi-DB MySQL
+                                <div className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+                                    Multi-Tenant Control
                                 </div>
                             </div>
                         </div>
                         <button
                             type="button"
                             onClick={() => setMobileSidebarOpen(false)}
-                            className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 lg:hidden dark:hover:bg-[#2D234A]"
+                            className="rounded-xl p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 lg:hidden dark:hover:bg-white/10 dark:hover:text-white"
                         >
                             <X className="h-4 w-4" />
                         </button>
                     </div>
 
-                    <nav className="flex-1 space-y-1.5 p-3">
-                        <div className="px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
-                            Menu Central
+                    {/* Navigation */}
+                    <nav className="flex-1 space-y-5 overflow-y-auto px-3.5 py-5">
+                        <div className="space-y-1">
+                            <div className="px-3 pb-1.5 text-[10px] font-extrabold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                                Manajemen Utama
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setActiveMenu('tenants');
+                                    setMobileSidebarOpen(false);
+                                }}
+                                className={`group relative flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-[13px] transition-all duration-200 ${
+                                    activeMenu === 'tenants'
+                                        ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF8A5B] font-bold text-white shadow-md shadow-[#FF6B35]/25'
+                                        : 'font-semibold text-gray-600 hover:bg-gray-100/80 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.06] dark:hover:text-white'
+                                }`}
+                            >
+                                <span className="flex items-center gap-2.5">
+                                    <Building2
+                                        className={`h-4 w-4 transition-transform duration-200 group-hover:scale-105 ${
+                                            activeMenu === 'tenants'
+                                                ? 'text-white'
+                                                : 'text-gray-400 group-hover:text-[#FF6B35] dark:text-gray-400'
+                                        }`}
+                                    />
+                                    <span>Sekolah & Domain</span>
+                                </span>
+                                <span
+                                    className={`rounded-full px-2 py-0.5 text-[10px] font-black ${
+                                        activeMenu === 'tenants'
+                                            ? 'bg-white/20 text-white'
+                                            : 'bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300'
+                                    }`}
+                                >
+                                    {tenants.length}
+                                </span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setActiveMenu('tutorials');
+                                    setMobileSidebarOpen(false);
+                                }}
+                                className={`group relative flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-[13px] transition-all duration-200 ${
+                                    activeMenu === 'tutorials'
+                                        ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF8A5B] font-bold text-white shadow-md shadow-[#FF6B35]/25'
+                                        : 'font-semibold text-gray-600 hover:bg-gray-100/80 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.06] dark:hover:text-white'
+                                }`}
+                            >
+                                <span className="flex items-center gap-2.5">
+                                    <PlayCircle
+                                        className={`h-4 w-4 transition-transform duration-200 group-hover:scale-105 ${
+                                            activeMenu === 'tutorials'
+                                                ? 'text-white'
+                                                : 'text-gray-400 group-hover:text-[#FF6B35] dark:text-gray-400'
+                                        }`}
+                                    />
+                                    <span>Video Tutorial</span>
+                                </span>
+                                <span
+                                    className={`rounded-full px-2 py-0.5 text-[10px] font-black ${
+                                        activeMenu === 'tutorials'
+                                            ? 'bg-white/20 text-white'
+                                            : 'bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300'
+                                    }`}
+                                >
+                                    {tutorials.length}
+                                </span>
+                            </button>
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setActiveMenu('tenants');
-                                setMobileSidebarOpen(false);
-                            }}
-                            className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
-                                activeMenu === 'tenants'
-                                    ? 'border border-[var(--brand-primary,#FF6B35)]/30 bg-[var(--brand-primary-light,#FFF0EB)] font-black text-[var(--brand-primary,#FF6B35)] shadow-2xs dark:border-[var(--brand-primary,#FF6B35)]/40 dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:text-white'
-                                    : 'font-bold text-gray-600 hover:bg-gray-100 hover:text-[var(--brand-primary,#FF6B35)] dark:text-gray-300 dark:hover:bg-[#2D234A]/60 dark:hover:text-white'
-                            }`}
-                        >
-                            <Building2 className="h-4 w-4" />
-                            Sekolah & Domain
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setActiveMenu('tutorials');
-                                setMobileSidebarOpen(false);
-                            }}
-                            className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
-                                activeMenu === 'tutorials'
-                                    ? 'border border-[var(--brand-primary,#FF6B35)]/30 bg-[var(--brand-primary-light,#FFF0EB)] font-black text-[var(--brand-primary,#FF6B35)] shadow-2xs dark:border-[var(--brand-primary,#FF6B35)]/40 dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:text-white'
-                                    : 'font-bold text-gray-600 hover:bg-gray-100 hover:text-[var(--brand-primary,#FF6B35)] dark:text-gray-300 dark:hover:bg-[#2D234A]/60 dark:hover:text-white'
-                            }`}
-                        >
-                            <PlayCircle className="h-4 w-4" />
-                            Video Tutorial
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setActiveMenu('theme');
-                                setMobileSidebarOpen(false);
-                            }}
-                            className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
-                                activeMenu === 'theme'
-                                    ? 'border border-[var(--brand-primary,#FF6B35)]/30 bg-[var(--brand-primary-light,#FFF0EB)] font-black text-[var(--brand-primary,#FF6B35)] shadow-2xs dark:border-[var(--brand-primary,#FF6B35)]/40 dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:text-white'
-                                    : 'font-bold text-gray-600 hover:bg-gray-100 hover:text-[var(--brand-primary,#FF6B35)] dark:text-gray-300 dark:hover:bg-[#2D234A]/60 dark:hover:text-white'
-                            }`}
-                        >
-                            <Palette className="h-4 w-4" />
-                            Tema Landing Page
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setActiveMenu('billing');
-                                setMobileSidebarOpen(false);
-                            }}
-                            className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
-                                activeMenu === 'billing'
-                                    ? 'border border-[var(--brand-primary,#FF6B35)]/30 bg-[var(--brand-primary-light,#FFF0EB)] font-black text-[var(--brand-primary,#FF6B35)] shadow-2xs dark:border-[var(--brand-primary,#FF6B35)]/40 dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:text-white'
-                                    : 'font-bold text-gray-600 hover:bg-gray-100 hover:text-[var(--brand-primary,#FF6B35)] dark:text-gray-300 dark:hover:bg-[#2D234A]/60 dark:hover:text-white'
-                            }`}
-                        >
-                            <CreditCard className="h-4 w-4" />
-                            Billing & Kontak
-                        </button>
-                        <Link
-                            href="/"
-                            className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-gray-600 transition-colors hover:bg-gray-100 hover:text-[var(--brand-primary,#FF6B35)] dark:text-gray-300 dark:hover:bg-[#2D234A]/60 dark:hover:text-white"
-                        >
-                            <Home className="h-4 w-4" />
-                            Landing Page Central
-                        </Link>
-                        <button
-                            type="button"
-                            onClick={handleMigrateAll}
-                            disabled={migratingAll || tenants.length === 0}
-                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-gray-600 transition-colors hover:bg-gray-100 hover:text-[var(--brand-primary,#FF6B35)] disabled:opacity-50 dark:text-gray-300 dark:hover:bg-[#2D234A]/60 dark:hover:text-white"
-                        >
-                            <RefreshCw
-                                className={`h-4 w-4 ${migratingAll ? 'animate-spin' : ''}`}
-                            />
-                            {migratingAll ? 'Memigrasi...' : 'Migrate Semua DB'}
-                        </button>
+
+                        <div className="space-y-1">
+                            <div className="px-3 pb-1.5 text-[10px] font-extrabold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                                Kustomisasi & Billing
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setActiveMenu('theme');
+                                    setMobileSidebarOpen(false);
+                                }}
+                                className={`group relative flex w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-[13px] transition-all duration-200 ${
+                                    activeMenu === 'theme'
+                                        ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF8A5B] font-bold text-white shadow-md shadow-[#FF6B35]/25'
+                                        : 'font-semibold text-gray-600 hover:bg-gray-100/80 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.06] dark:hover:text-white'
+                                }`}
+                            >
+                                <Palette
+                                    className={`h-4 w-4 transition-transform duration-200 group-hover:scale-105 ${
+                                        activeMenu === 'theme'
+                                            ? 'text-white'
+                                            : 'text-gray-400 group-hover:text-[#FF6B35] dark:text-gray-400'
+                                    }`}
+                                />
+                                <span>Tema Landing Page</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setActiveMenu('billing');
+                                    setMobileSidebarOpen(false);
+                                }}
+                                className={`group relative flex w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-[13px] transition-all duration-200 ${
+                                    activeMenu === 'billing'
+                                        ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF8A5B] font-bold text-white shadow-md shadow-[#FF6B35]/25'
+                                        : 'font-semibold text-gray-600 hover:bg-gray-100/80 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.06] dark:hover:text-white'
+                                }`}
+                            >
+                                <CreditCard
+                                    className={`h-4 w-4 transition-transform duration-200 group-hover:scale-105 ${
+                                        activeMenu === 'billing'
+                                            ? 'text-white'
+                                            : 'text-gray-400 group-hover:text-[#FF6B35] dark:text-gray-400'
+                                    }`}
+                                />
+                                <span>Billing & Kontak</span>
+                            </button>
+                        </div>
+
+                        <div className="space-y-1">
+                            <div className="px-3 pb-1.5 text-[10px] font-extrabold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                                Sistem & Pintasan
+                            </div>
+                            <Link
+                                href="/"
+                                className="group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-[13px] font-semibold text-gray-600 transition-all duration-200 hover:bg-gray-100/80 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.06] dark:hover:text-white"
+                            >
+                                <span className="flex items-center gap-2.5">
+                                    <Home className="h-4 w-4 text-gray-400 transition-colors group-hover:text-[#FF6B35]" />
+                                    <span>Landing Page Central</span>
+                                </span>
+                                <ExternalLink className="h-3.5 w-3.5 text-gray-300 transition-colors group-hover:text-[#FF6B35] dark:text-gray-600" />
+                            </Link>
+
+                            <button
+                                type="button"
+                                onClick={handleMigrateAll}
+                                disabled={migratingAll || tenants.length === 0}
+                                className="group flex w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-[13px] font-semibold text-gray-600 transition-all duration-200 hover:bg-emerald-50/80 hover:text-emerald-700 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-300"
+                            >
+                                <RefreshCw
+                                    className={`h-4 w-4 text-gray-400 transition-colors group-hover:text-emerald-600 dark:group-hover:text-emerald-400 ${
+                                        migratingAll ? 'animate-spin text-emerald-600' : ''
+                                    }`}
+                                />
+                                <span>{migratingAll ? 'Memigrasi DB...' : 'Migrate Semua DB'}</span>
+                            </button>
+                        </div>
                     </nav>
 
-                    <div className="border-t border-[#E8E8E8] p-3 dark:border-[#2D234A]">
-                        <div className="mb-2 rounded-xl border border-[#E8E8E8] bg-[#FFFBF7] px-3 py-2 text-xs text-gray-500 dark:border-[#2D234A] dark:bg-[#130E24] dark:text-gray-400">
-                            <div className="font-bold text-gray-800 dark:text-gray-200">
-                                Central Host
+                    {/* Sidebar Footer */}
+                    <div className="border-t border-gray-100 p-3.5 dark:border-white/[0.06]">
+                        <div className="mb-2.5 rounded-2xl border border-gray-200/80 bg-gray-50/80 p-3 dark:border-white/[0.08] dark:bg-[#100B1E]">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">
+                                    Central Host
+                                </span>
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100/80 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-400">
+                                    <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />
+                                    Online
+                                </span>
                             </div>
-                            <div className="truncate font-mono text-[11px]">
+                            <div className="mt-1 truncate font-mono text-xs font-semibold text-gray-800 dark:text-gray-200">
                                 {central.current_host}
                             </div>
                         </div>
                         <button
                             type="button"
                             onClick={() => router.post('/admin/logout')}
-                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-bold text-rose-600 transition-colors hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"
+                            className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200/70 bg-rose-50/50 px-3 py-2 text-xs font-bold text-rose-600 transition-all hover:bg-rose-100/80 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-400 dark:hover:bg-rose-950/50"
                         >
-                            <LogOut className="h-4 w-4" />
+                            <LogOut className="h-3.5 w-3.5" />
                             Keluar Admin
                         </button>
                     </div>
@@ -887,40 +969,52 @@ export default function CentralDashboard({
 
                 <div className="relative flex min-w-0 flex-1 flex-col overflow-y-auto">
                     {/* Ambient Background Glows */}
-                    <div className="pointer-events-none fixed top-0 right-0 -z-0 size-96 rounded-full bg-[#FF6B35]/10 blur-3xl" />
-                    <div className="pointer-events-none fixed bottom-0 left-64 -z-0 size-96 rounded-full bg-[#4ECDC4]/10 blur-3xl" />
+                    <div className="pointer-events-none fixed top-0 right-0 -z-0 size-[460px] rounded-full bg-[#FF6B35]/[0.07] blur-[120px]" />
+                    <div className="pointer-events-none fixed bottom-0 left-64 -z-0 size-[420px] rounded-full bg-[#4ECDC4]/[0.07] blur-[120px]" />
 
                     {/* Top Sticky Header */}
-                    <header className="sticky top-0 z-30 border-b border-[#E8E8E8] bg-white/85 backdrop-blur-md dark:border-[#2D234A] dark:bg-[#18122B]/85">
+                    <header className="sticky top-0 z-30 border-b border-gray-200/70 bg-white/80 backdrop-blur-xl dark:border-white/[0.08] dark:bg-[#130E24]/80">
                         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
                             <div className="flex items-center gap-3">
                                 <button
                                     type="button"
                                     onClick={() => setMobileSidebarOpen(true)}
-                                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#E8E8E8] text-gray-600 hover:bg-gray-100 lg:hidden dark:border-[#2D234A] dark:text-gray-300 dark:hover:bg-[#2D234A]"
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 shadow-2xs transition-colors hover:bg-gray-50 lg:hidden dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
                                     title="Buka menu"
                                 >
                                     <Layers className="h-4 w-4" />
                                 </button>
                                 <div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2.5">
                                         <h1 className="text-base font-black tracking-tight text-gray-900 sm:text-lg dark:text-white">
-                                            Central Tenancy Hub
+                                            {activeMenu === 'tenants'
+                                                ? 'Sekolah & Domain'
+                                                : activeMenu === 'tutorials'
+                                                  ? 'Video Tutorial Global'
+                                                  : activeMenu === 'theme'
+                                                    ? 'Tema Landing Page'
+                                                    : 'Billing & Kontak Admin'}
                                         </h1>
                                         <Badge
                                             variant="secondary"
-                                            className="hidden border-[#FF6B35]/30 bg-[#FFF0EB] font-bold text-[#FF6B35] sm:inline-flex dark:border-[#FF6B35]/40 dark:bg-[#331C1A] dark:text-[#FF8C5A]"
+                                            className="hidden border border-[#FF6B35]/25 bg-[#FFF0EB] text-[11px] font-bold text-[#FF6B35] sm:inline-flex dark:border-[#FF6B35]/40 dark:bg-[#FF6B35]/15 dark:text-[#FF9E75]"
                                         >
                                             Multi-DB MySQL
                                         </Badge>
                                     </div>
                                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                                        Kelola subdomain, custom domain, & database sekolah dari satu tempat
+                                        {activeMenu === 'tenants'
+                                            ? 'Kelola subdomain, custom domain, lisensi, & database sekolah dari satu tempat'
+                                            : activeMenu === 'tutorials'
+                                              ? 'Sinkronisasi panduan video YouTube ke seluruh portal sekolah'
+                                              : activeMenu === 'theme'
+                                                ? 'Atur identitas visual & palet warna landing page utama central'
+                                                : 'Konfigurasi informasi pembayaran, WhatsApp, & email layanan'}
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2.5">
                                 <Button
                                     variant="primary"
                                     size="sm"
@@ -930,7 +1024,7 @@ export default function CentralDashboard({
                                         setIdManuallyEdited(false);
                                         setCreateOpen(true);
                                     }}
-                                    className="rounded-xl font-bold shadow-brand"
+                                    className="rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#FF8A5B] px-4 font-bold text-white shadow-md shadow-[#FF6B35]/25 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#FF6B35]/30"
                                 >
                                     <Plus className="mr-1.5 h-4 w-4" />
                                     Tambah Sekolah
@@ -942,7 +1036,7 @@ export default function CentralDashboard({
                 <main className="relative z-10 mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
                     {activeMenu === 'tutorials' ? (
                         <div className="space-y-6">
-                            <Card className="rounded-2xl border-[#E8E8E8] bg-white/90 shadow-xs dark:border-[#2D234A] dark:bg-[#18122B]/90">
+                            <Card className="rounded-2xl border border-gray-200/80 bg-white/95 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.04)] dark:border-white/[0.08] dark:bg-[#18122B]/90">
                                 <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
                                         <CardTitle className="flex items-center gap-2 text-lg font-black">
@@ -1104,7 +1198,7 @@ export default function CentralDashboard({
                         </div>
                     ) : activeMenu === 'billing' ? (
                         <div className="space-y-6">
-                            <Card className="rounded-2xl border-[#E8E8E8] bg-white/90 shadow-xs dark:border-[#2D234A] dark:bg-[#18122B]/90">
+                            <Card className="rounded-2xl border border-gray-200/80 bg-white/95 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.04)] dark:border-white/[0.08] dark:bg-[#18122B]/90">
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2 text-lg font-black">
                                         <CreditCard className="h-5 w-5 text-[var(--brand-primary,#FF6B35)]" />
@@ -1292,7 +1386,7 @@ export default function CentralDashboard({
                         </div>
                     ) : activeMenu === 'theme' ? (
                         <div className="space-y-6">
-                            <Card className="rounded-2xl border-[#E8E8E8] bg-white/90 shadow-xs dark:border-[#2D234A] dark:bg-[#18122B]/90">
+                            <Card className="rounded-2xl border border-gray-200/80 bg-white/95 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.04)] dark:border-white/[0.08] dark:bg-[#18122B]/90">
                                 <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
                                         <CardTitle className="flex items-center gap-2 text-lg font-black">
@@ -1392,80 +1486,84 @@ export default function CentralDashboard({
                         <>
                     {/* KPI Bento Grid */}
                     <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <Card className="rounded-2xl border-[#E8E8E8] bg-white/90 shadow-xs dark:border-[#2D234A] dark:bg-[#18122B]/90">
+                        <Card className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/95 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#FF6B35]/40 hover:shadow-lg hover:shadow-[#FF6B35]/10 dark:border-white/[0.08] dark:bg-[#18122B]/90">
+                            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#FF6B35] to-[#FFB347]" />
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardDescription className="text-xs font-bold uppercase tracking-wider">
+                                <CardDescription className="text-[11px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                     Total Sekolah
                                 </CardDescription>
-                                <div className="rounded-xl bg-[#FFF0EB] p-2 text-[#FF6B35] dark:bg-[#331C1A] dark:text-[#FF8C5A]">
-                                    <Building2 className="h-4 w-4" />
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#FFF0EB] to-[#FFE2D6] text-[#FF6B35] ring-1 ring-[#FF6B35]/15 transition-transform duration-300 group-hover:scale-105 dark:from-[#331C1A] dark:to-[#291513] dark:text-[#FF8C5A]">
+                                    <Building2 className="h-5 w-5" />
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-3xl font-black tracking-tight">
+                                <div className="text-3xl font-black tracking-tight text-gray-900 dark:text-white">
                                     {stats.total_tenants}
                                 </div>
-                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">
                                     Tenant aktif dengan database terpisah
                                 </p>
                             </CardContent>
                         </Card>
 
-                        <Card className="rounded-2xl border-[#E8E8E8] bg-white/90 shadow-xs dark:border-[#2D234A] dark:bg-[#18122B]/90">
+                        <Card className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/95 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#20B2AA]/40 hover:shadow-lg hover:shadow-[#20B2AA]/10 dark:border-white/[0.08] dark:bg-[#18122B]/90">
+                            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#20B2AA] to-[#4ECDC4]" />
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardDescription className="text-xs font-bold uppercase tracking-wider">
+                                <CardDescription className="text-[11px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                     Total Domain
                                 </CardDescription>
-                                <div className="rounded-xl bg-[#E6FAF8] p-2 text-[#20B2AA] dark:bg-[#123836] dark:text-[#4ECDC4]">
-                                    <Globe className="h-4 w-4" />
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#E6FAF8] to-[#CCF5F1] text-[#20B2AA] ring-1 ring-[#20B2AA]/15 transition-transform duration-300 group-hover:scale-105 dark:from-[#123836] dark:to-[#0F2D2B] dark:text-[#4ECDC4]">
+                                    <Globe className="h-5 w-5" />
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-3xl font-black tracking-tight">
+                                <div className="text-3xl font-black tracking-tight text-gray-900 dark:text-white">
                                     {stats.total_domains}
                                 </div>
-                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">
                                     {stats.subdomains_count} subdomain ·{' '}
                                     {stats.custom_domains_count} custom domain
                                 </p>
                             </CardContent>
                         </Card>
 
-                        <Card className="rounded-2xl border-[#E8E8E8] bg-white/90 shadow-xs dark:border-[#2D234A] dark:bg-[#18122B]/90">
+                        <Card className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/95 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/10 dark:border-white/[0.08] dark:bg-[#18122B]/90">
+                            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-400" />
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardDescription className="text-xs font-bold uppercase tracking-wider">
+                                <CardDescription className="text-[11px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                     Arsitektur DB
                                 </CardDescription>
-                                <div className="rounded-xl bg-emerald-50 p-2 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
-                                    <Database className="h-4 w-4" />
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-600 ring-1 ring-emerald-500/15 transition-transform duration-300 group-hover:scale-105 dark:from-emerald-950/70 dark:to-emerald-900/50 dark:text-emerald-400">
+                                    <Database className="h-5 w-5" />
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <div className="flex items-center gap-2 text-xl font-black tracking-tight">
+                                <div className="flex items-center gap-2 text-xl font-black tracking-tight text-gray-900 dark:text-white">
                                     MySQL Multi-DB
                                     <ShieldCheck className="h-5 w-5 text-emerald-500" />
                                 </div>
-                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">
                                     Isolasi database & storage otomatis
                                 </p>
                             </CardContent>
                         </Card>
 
-                        <Card className="rounded-2xl border-[#E8E8E8] bg-white/90 shadow-xs dark:border-[#2D234A] dark:bg-[#18122B]/90">
+                        <Card className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/95 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-0.5 hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/10 dark:border-white/[0.08] dark:bg-[#18122B]/90">
+                            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-500 to-orange-400" />
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardDescription className="text-xs font-bold uppercase tracking-wider">
+                                <CardDescription className="text-[11px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                     Base Domain
                                 </CardDescription>
-                                <div className="rounded-xl bg-amber-50 p-2 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400">
-                                    <Server className="h-4 w-4" />
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-50 to-amber-100 text-amber-600 ring-1 ring-amber-500/15 transition-transform duration-300 group-hover:scale-105 dark:from-amber-950/70 dark:to-amber-900/50 dark:text-amber-400">
+                                    <Server className="h-5 w-5" />
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <div className="truncate font-mono text-base font-bold">
+                                <div className="truncate font-mono text-base font-bold text-gray-900 dark:text-white">
                                     *.{central.base_domain}
                                     {central.port_suffix}
                                 </div>
-                                <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                <p className="mt-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
                                     Central host: {central.current_host}
                                 </p>
                             </CardContent>
@@ -1473,19 +1571,29 @@ export default function CentralDashboard({
                     </section>
 
                     {/* Toolbar: Search + Filter */}
-                    <Card className="rounded-2xl border-[#E8E8E8] bg-white/90 shadow-xs dark:border-[#2D234A] dark:bg-[#18122B]/90">
-                        <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <Card className="rounded-2xl border border-gray-200/80 bg-white/95 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.04)] dark:border-white/[0.08] dark:bg-[#18122B]/90">
+                        <CardContent className="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between">
                             <div className="relative w-full sm:max-w-md">
-                                <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                <Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-gray-400" />
                                 <Input
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     placeholder="Cari nama sekolah, ID tenant, database, atau domain..."
-                                    className="pl-9"
+                                    className="h-10 rounded-xl border-gray-200/90 bg-gray-50/70 pl-10 pr-9 text-sm transition-colors focus:bg-white dark:border-white/10 dark:bg-[#100B1E] dark:focus:bg-[#151026]"
                                 />
+                                {search && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setSearch('')}
+                                        className="absolute top-1/2 right-2.5 -translate-y-1/2 rounded-md p-1 text-gray-400 hover:bg-gray-200/70 hover:text-gray-600 dark:hover:bg-white/10 dark:hover:text-gray-200"
+                                        title="Bersihkan pencarian"
+                                    >
+                                        <X className="h-3.5 w-3.5" />
+                                    </button>
+                                )}
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-2">
+                            <div className="inline-flex flex-wrap items-center gap-1 rounded-xl bg-gray-100/80 p-1 dark:bg-[#100B1E]">
                                 {(
                                     [
                                         { key: 'all', label: 'Semua' },
@@ -1500,10 +1608,10 @@ export default function CentralDashboard({
                                         key={tab.key}
                                         type="button"
                                         onClick={() => setDomainFilter(tab.key)}
-                                        className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
+                                        className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all ${
                                             domainFilter === tab.key
-                                                ? 'bg-[var(--brand-primary,#FF6B35)] text-white shadow-xs'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-[#130E24] dark:text-gray-300 dark:hover:bg-[#2D234A]'
+                                                ? 'bg-white text-[#FF6B35] shadow-xs dark:bg-[#FF6B35] dark:text-white'
+                                                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
                                         }`}
                                     >
                                         {tab.label}
@@ -1515,24 +1623,24 @@ export default function CentralDashboard({
 
                     {/* Tenant List */}
                     {filteredTenants.length === 0 ? (
-                        <Card className="border-dashed border-slate-300 dark:border-slate-800">
+                        <Card className="rounded-2xl border-2 border-dashed border-gray-200/90 bg-white/70 dark:border-white/10 dark:bg-[#18122B]/50">
                             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                                <div className="mb-4 rounded-2xl bg-indigo-50 p-4 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+                                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFF0EB] to-[#FFE2D6] text-[#FF6B35] shadow-sm dark:from-[#331C1A] dark:to-[#291513] dark:text-[#FF8C5A]">
                                     <Sparkles className="h-8 w-8" />
                                 </div>
-                                <h3 className="text-lg font-semibold">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                                     {tenants.length === 0
                                         ? 'Belum ada sekolah terdaftar'
                                         : 'Tidak ada sekolah yang cocok'}
                                 </h3>
-                                <p className="mt-1 max-w-md text-sm text-slate-500">
+                                <p className="mt-1.5 max-w-md text-sm text-gray-500 dark:text-gray-400">
                                     {tenants.length === 0
                                         ? 'Tambahkan sekolah pertama untuk otomatis membuat database MySQL terpisah beserta subdomain atau custom domain-nya.'
                                         : 'Coba ubah kata kunci pencarian atau filter tipe domain.'}
                                 </p>
                                 {tenants.length === 0 && (
                                     <Button
-                                        className="mt-5 bg-indigo-600 text-white hover:bg-indigo-700"
+                                        className="mt-5 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#FF8A5B] font-bold text-white shadow-md shadow-[#FF6B35]/25"
                                         onClick={() => setCreateOpen(true)}
                                     >
                                         <Plus className="mr-1.5 h-4 w-4" />
@@ -1546,23 +1654,23 @@ export default function CentralDashboard({
                             {filteredTenants.map((tenant) => (
                                 <Card
                                     key={tenant.id}
-                                    className="group rounded-2xl border-[#E8E8E8] bg-white/90 transition-all hover:border-[#FF6B35]/50 hover:shadow-md dark:border-[#2D234A] dark:bg-[#18122B]/90 dark:hover:border-[#FF6B35]/50"
+                                    className="group overflow-hidden rounded-2xl border border-gray-200/90 bg-white/95 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.04)] transition-all duration-300 hover:border-[#FF6B35]/45 hover:shadow-xl hover:shadow-[#FF6B35]/[0.06] dark:border-white/[0.08] dark:bg-[#18122B]/95 dark:hover:border-[#FF6B35]/50"
                                 >
-                                    <CardHeader className="flex flex-col gap-4 pb-3 sm:flex-row sm:items-start sm:justify-between">
-                                        <div className="flex items-start gap-3.5">
-                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-[#FF6B35] to-[#FFE66D] text-sm font-black uppercase text-white shadow-sm shadow-[#FF6B35]/25">
+                                    <CardHeader className="flex flex-col gap-4 pb-4 sm:flex-row sm:items-start sm:justify-between">
+                                        <div className="flex items-start gap-4">
+                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FF6B35] via-[#FF8552] to-[#FFB347] text-sm font-black uppercase text-white shadow-md shadow-[#FF6B35]/20 ring-1 ring-white/20">
                                                 {tenant.name
                                                     .slice(0, 2)
                                                     .toUpperCase()}
                                             </div>
                                             <div>
                                                 <div className="flex flex-wrap items-center gap-2">
-                                                    <CardTitle className="text-base font-semibold">
+                                                    <CardTitle className="text-base font-extrabold text-gray-900 dark:text-white">
                                                         {tenant.name}
                                                     </CardTitle>
                                                     <Badge
                                                         variant="outline"
-                                                        className="font-mono text-[11px]"
+                                                        className="rounded-lg border-gray-200 bg-gray-50/80 font-mono text-[11px] font-semibold text-gray-600 dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
                                                     >
                                                         ID: {tenant.id}
                                                     </Badge>
@@ -1719,15 +1827,14 @@ export default function CentralDashboard({
                                         </div>
                                     </CardHeader>
 
-                                    <Separator className="opacity-60" />
-
-                                    <CardContent className="pt-3.5">
-                                        <div className="mb-2 text-xs font-medium text-slate-500">
-                                            Domain & Subdomain Terhubung (
-                                            {tenant.domains.length})
+                                    <CardContent className="border-t border-gray-100 bg-gray-50/70 px-6 py-4 dark:border-white/[0.06] dark:bg-[#110C20]/60">
+                                        <div className="mb-2.5 flex items-center justify-between text-[11px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                            <span>
+                                                Domain & Subdomain Terhubung ({tenant.domains.length})
+                                            </span>
                                         </div>
                                         {tenant.domains.length === 0 ? (
-                                            <p className="text-xs italic text-slate-400">
+                                            <p className="text-xs italic text-gray-400">
                                                 Belum ada domain terhubung. Klik
                                                 "+ Domain" untuk menambahkan.
                                             </p>
@@ -1736,10 +1843,10 @@ export default function CentralDashboard({
                                                 {tenant.domains.map((dom) => (
                                                     <div
                                                         key={dom.id}
-                                                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-1.5 text-xs dark:border-slate-800 dark:bg-slate-900/70"
+                                                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200/90 bg-white px-3 py-1.5 text-xs shadow-2xs transition-colors hover:border-[#FF6B35]/35 dark:border-white/10 dark:bg-[#18122B]"
                                                     >
                                                         <span
-                                                            className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                                                            className={`rounded-md px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wide ${
                                                                 dom.type ===
                                                                 'custom'
                                                                     ? 'bg-[#E6FAF8] text-[#20B2AA] dark:bg-[#123836] dark:text-[#4ECDC4]'
@@ -1751,12 +1858,12 @@ export default function CentralDashboard({
                                                                 ? 'Custom'
                                                                 : 'Subdomain'}
                                                         </span>
-                                                        <span className="font-mono font-medium text-slate-700 dark:text-slate-200">
+                                                        <span className="font-mono font-semibold text-gray-800 dark:text-gray-200">
                                                             {dom.full_host}
                                                             {central.port_suffix}
                                                         </span>
 
-                                                        <div className="ml-1 flex items-center gap-1 border-l border-slate-200 pl-2 dark:border-slate-700">
+                                                        <div className="ml-1 flex items-center gap-1 border-l border-gray-200 pl-2 dark:border-white/10">
                                                             <button
                                                                 type="button"
                                                                 onClick={() =>
@@ -1764,7 +1871,7 @@ export default function CentralDashboard({
                                                                         dom.url,
                                                                     )
                                                                 }
-                                                                className="rounded p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                                                className="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/10 dark:hover:text-gray-200"
                                                                 title="Salin URL"
                                                             >
                                                                 {copiedUrl ===
@@ -1778,7 +1885,7 @@ export default function CentralDashboard({
                                                                 href={dom.url}
                                                                 target="_blank"
                                                                 rel="noreferrer"
-                                                                className="rounded p-0.5 text-slate-400 hover:bg-slate-200 hover:text-indigo-600 dark:hover:bg-slate-800 dark:hover:text-indigo-400"
+                                                                className="rounded-md p-1 text-gray-400 transition-colors hover:bg-[#FFF0EB] hover:text-[#FF6B35] dark:hover:bg-[#FF6B35]/20 dark:hover:text-[#FF9E75]"
                                                                 title="Buka aplikasi sekolah"
                                                             >
                                                                 <ExternalLink className="h-3.5 w-3.5" />
@@ -1790,7 +1897,7 @@ export default function CentralDashboard({
                                                                         dom,
                                                                     )
                                                                 }
-                                                                className="rounded p-0.5 text-slate-400 hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-rose-950/60"
+                                                                className="rounded-md p-1 text-gray-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/60"
                                                                 title="Hapus domain"
                                                             >
                                                                 <X className="h-3.5 w-3.5" />
