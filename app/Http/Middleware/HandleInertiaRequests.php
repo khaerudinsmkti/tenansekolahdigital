@@ -50,6 +50,9 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'isCentral' => ! $isTenant,
             'centralAdminAuthenticated' => ! $isTenant && (bool) $request->session()->get('central_admin_authenticated', false),
+            'tenantLicense' => $isTenant && tenant() instanceof \App\Models\Tenant
+                ? \App\Services\TenantLicenseService::getStatus(tenant())
+                : null,
             'name' => $schoolName,
             'auth' => [
                 'user' => $user ? array_merge($user->toArray(), [

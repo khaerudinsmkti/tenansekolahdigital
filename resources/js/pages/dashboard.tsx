@@ -125,6 +125,12 @@ export default function Dashboard({
     const { props } = usePage();
     const user = props.auth?.user as { name?: string; role?: string; nip?: string | null } | undefined;
     const school = props.school as { name?: string; principal_nip?: string | null; principal_name?: string } | undefined;
+    const tenantLicense = props.tenantLicense as {
+        starts_at: string | null;
+        expires_at: string | null;
+        status: 'unlimited' | 'upcoming' | 'active' | 'expired';
+        days_remaining: number | null;
+    } | null | undefined;
 
     // Menentukan sebutan Bapak / Ibu berdasarkan NIP 18 digit (digit ke-15 / 4 angka dari belakang: 1 = Bapak, 2 = Ibu)
     const greetingHonorific = useMemo(() => {
@@ -378,6 +384,30 @@ export default function Dashboard({
                         </div>
                     }
                 />
+
+                {tenantLicense && (tenantLicense.starts_at || tenantLicense.expires_at) && (
+                    <div
+                        className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-xs font-semibold ${
+                            tenantLicense.days_remaining !== null && tenantLicense.days_remaining <= 7
+                                ? 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200'
+                                : 'border-emerald-200 bg-emerald-50/80 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200'
+                        }`}
+                    >
+                        <div className="flex flex-wrap items-center gap-2">
+                            <ShieldCheck className="size-4 shrink-0" />
+                            <span>
+                                Lisensi Aplikasi Aktif
+                                {tenantLicense.starts_at ? ` mulai ${tenantLicense.starts_at}` : ''}
+                                {tenantLicense.expires_at ? ` hingga ${tenantLicense.expires_at}` : ''}
+                            </span>
+                        </div>
+                        {tenantLicense.days_remaining !== null && (
+                            <span className="rounded-lg bg-white/80 px-2.5 py-1 font-bold text-gray-800 dark:bg-black/25 dark:text-white">
+                                Sisa {tenantLicense.days_remaining} hari
+                            </span>
+                        )}
+                    </div>
+                )}
 
                 {/* Scope Filter Bar (Seluruh Kelas vs Kelas Spesifik) */}
                 {hasNoAssignedClass ? (

@@ -1,14 +1,14 @@
 {
     "id": "/?source=pwa",
-    "name": "SD Digital Indonesia",
-    "short_name": "SD Digital Indonesia",
-    "description": "Portal dan Aplikasi Presensi Siswa Resmi - SD Digital Indonesia",
+    "name": "SMK Telematika Indramayu",
+    "short_name": "SMK Telematika Indramayu",
+    "description": "Portal dan Aplikasi Presensi Siswa Resmi - SMK Telematika Indramayu",
     "start_url": "/?source=pwa",
     "scope": "/",
     "display": "standalone",
     "orientation": "portrait-primary",
     "background_color": "#FFFFFF",
-    "theme_color": "#FF6B35",
+    "theme_color": "#2563EB",
     "prefer_related_applications": false,
     "categories": [
         "education",
@@ -16,28 +16,34 @@
     ],
     "icons": [
         {
-            "src": "/icons/icon-192x192.png?v=1794886105",
+            "src": "/icons/icon-192x192.png?v=1794901300",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "/icons/icon-maskable-192x192.png?v=1794886105",
+            "src": "/icons/icon-maskable-192x192.png?v=1794901300",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "maskable"
         },
         {
-            "src": "/icons/icon-512x512.png?v=1794886105",
+            "src": "/icons/icon-512x512.png?v=1794901300",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "/icons/icon-maskable-512x512.png?v=1794886105",
+            "src": "/icons/icon-maskable-512x512.png?v=1794901300",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"
+        },
+        {
+            "src": "/storage/school/WfnPuUPL3QUC0VR14gLmPbn5Iz8upVghf4psu4fh.webp?v=1794901300",
+            "sizes": "500x500",
+            "type": "image/webp",
+            "purpose": "any"
         }
     ]
 }

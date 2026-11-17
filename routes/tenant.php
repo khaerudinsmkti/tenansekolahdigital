@@ -40,9 +40,28 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 */
 
 Route::middleware([
+    InitializeTenancyByDomainOrSubdomain::class,
+    PreventAccessFromCentralDomains::class,
+])->group(function () {
+    Route::get('/storage/{path}', function (string $path) {
+        $cleanPath = ltrim(str_replace('..', '', $path), '/');
+        $disk = \Illuminate\Support\Facades\Storage::disk('public');
+
+        if ($cleanPath === '' || ! $disk->exists($cleanPath)) {
+            abort(404);
+        }
+
+        return response()->file($disk->path($cleanPath), [
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
+    })->where('path', '.*')->name('tenant.storage');
+});
+
+Route::middleware([
     'web',
     InitializeTenancyByDomainOrSubdomain::class,
     PreventAccessFromCentralDomains::class,
+    \App\Http\Middleware\EnsureTenantLicenseActive::class,
 ])->group(function () {
     Route::get('/', [WelcomeController::class, 'index'])->name('home');
     Route::get('/portal', [WelcomeController::class, 'index'])->name('public.portal');

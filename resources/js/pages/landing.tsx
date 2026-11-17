@@ -544,7 +544,7 @@ const PRICING_PLANS: PricingPlan[] = [
         id: 'website',
         name: 'Paket Website Sekolah',
         subtitle: 'Cocok untuk membangun citra & portal informasi resmi sekolah',
-        price: 'Rp 200rb',
+        price: 'Rp 500rb',
         period: '/tahun',
         badge: 'Starter',
         features: [
@@ -557,13 +557,13 @@ const PRICING_PLANS: PricingPlan[] = [
             'Penggantian Tema Sekolah (10+ Tema) & Dark Mode',
         ],
         waMessage:
-            'Halo, saya tertarik untuk bertanya & memesan *Paket Website Sekolah (Rp 200rb/tahun)*. Mohon info lebih lanjut.',
+            'Halo, saya tertarik untuk bertanya & memesan *Paket Website Sekolah (Rp 500rb/tahun)*. Mohon info lebih lanjut.',
     },
     {
         id: 'website-absensi',
         name: 'Paket Website + Absensi',
         subtitle: 'Digitalisasi penuh portal sekolah & presensi siswa harian',
-        price: 'Rp 300rb',
+        price: 'Rp 600rb',
         period: '/tahun',
         badge: 'Paling Populer',
         isPopular: true,
@@ -577,13 +577,13 @@ const PRICING_PLANS: PricingPlan[] = [
             'PWA Installable & Push Notifikasi Pengingat Guru',
         ],
         waMessage:
-            'Halo, saya tertarik untuk bertanya & memesan *Paket Website + Absensi Siswa (Rp 300rb/tahun)*. Mohon info lebih lanjut.',
+            'Halo, saya tertarik untuk bertanya & memesan *Paket Website + Absensi Siswa (Rp 600rb/tahun)*. Mohon info lebih lanjut.',
     },
     {
         id: 'all-in-one',
         name: 'Paket All-in-One Lengkap',
         subtitle: 'Solusi paripurna hingga level pimpinan & ekstrakurikuler',
-        price: 'Rp 350rb',
+        price: 'Rp 700rb',
         period: '/tahun',
         badge: 'Terlengkap',
         isBestValue: true,
@@ -597,7 +597,7 @@ const PRICING_PLANS: PricingPlan[] = [
             'Matriks Hak Akses, Kenaikan Kelas & Passkey Biometrik',
         ],
         waMessage:
-            'Halo, saya tertarik untuk bertanya & memesan *Paket All-in-One Lengkap (Rp 350rb/tahun)*. Mohon info lebih lanjut.',
+            'Halo, saya tertarik untuk bertanya & memesan *Paket All-in-One Lengkap (Rp 700rb/tahun)*. Mohon info lebih lanjut.',
     },
 ];
 

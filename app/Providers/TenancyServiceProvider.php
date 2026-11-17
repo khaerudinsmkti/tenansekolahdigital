@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Jobs\SyncCentralTutorialsToTenant;
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -27,6 +29,8 @@ class TenancyServiceProvider extends ServiceProvider
                 JobPipeline::make([
                     Jobs\CreateDatabase::class,
                     Jobs\MigrateDatabase::class,
+                    SyncCentralTutorialsToTenant::class,
+                    \App\Jobs\SyncCentralTutorialsToTenant::class,
                     // Jobs\SeedDatabase::class,
 
                     // Your own jobs to prepare the tenant.
@@ -142,7 +146,7 @@ class TenancyServiceProvider extends ServiceProvider
         ];
 
         foreach (array_reverse($tenancyMiddleware) as $middleware) {
-            $this->app[\Illuminate\Contracts\Http\Kernel::class]->prependToMiddlewarePriority($middleware);
+            $this->app[Kernel::class]->prependToMiddlewarePriority($middleware);
         }
     }
 }

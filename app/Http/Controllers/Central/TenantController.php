@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Central;
 
 use App\Http\Controllers\Controller;
+use App\Models\CentralTutorial;
 use App\Models\Tenant;
+use App\Models\Tutorial;
 use App\Services\CentralSettingService;
+use App\Services\TenantLicenseService;
 use App\Services\ThemeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -57,6 +60,7 @@ class TenantController extends Controller
                     'database' => $tenant->database()->getName(),
                     'created_at' => $tenant->created_at?->toIso8601String(),
                     'domains' => $domains,
+                    'license' => TenantLicenseService::getStatus($tenant),
                 ];
             })
             ->values();
@@ -80,6 +84,8 @@ class TenantController extends Controller
             ],
             'themes' => array_values(ThemeService::getThemes()),
             'currentTheme' => CentralSettingService::getThemeColor(),
+            'tutorials' => CentralTutorial::query()->orderBy('order')->latest('id')->get(),
+            'tutorialRoles' => Tutorial::getAvailableRoles(),
         ]);
     }
 
@@ -150,6 +156,23 @@ class TenantController extends Controller
         ]);
 
         return back()->with('success', "Nama sekolah [{$tenant->id}] berhasil diperbarui.");
+    }
+
+    public function updateLicense(Request $request, Tenant $tenant): RedirectResponse
+    {
+        $validated = $request->validate([
+            'license_starts_at' => ['nullable', 'date'],
+            'license_expires_at' => ['nullable', 'date', 'after_or_equal:license_starts_at'],
+        ], [
+            'license_expires_at.after_or_equal' => 'Tanggal berakhir harus sama dengan atau setelah tanggal mulai aktif.',
+        ]);
+
+        $tenant->update([
+            'license_starts_at' => $validated['license_starts_at'] ?: null,
+            'license_expires_at' => $validated['license_expires_at'] ?: null,
+        ]);
+
+        return back()->with('success', "Lisensi aplikasi untuk \"{$tenant->name}\" berhasil diperbarui.");
     }
 
     public function storeDomain(Request $request, Tenant $tenant): RedirectResponse

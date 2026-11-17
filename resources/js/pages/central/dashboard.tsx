@@ -1,6 +1,7 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     Building2,
+    CalendarClock,
     Check,
     Copy,
     Database,
@@ -11,6 +12,7 @@ import {
     LogOut,
     Palette,
     Pencil,
+    PlayCircle,
     Plus,
     RefreshCw,
     Search,
@@ -18,6 +20,8 @@ import {
     ShieldCheck,
     Sparkles,
     Trash2,
+    UserPlus,
+    Users,
     X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -53,12 +57,31 @@ interface TenantDomain {
     url: string;
 }
 
+interface TenantLicense {
+    starts_at: string | null;
+    expires_at: string | null;
+    status: 'unlimited' | 'upcoming' | 'active' | 'expired';
+    is_usable: boolean;
+    days_remaining: number | null;
+}
+
 interface TenantItem {
     id: string;
     name: string;
     database: string;
     created_at: string | null;
     domains: TenantDomain[];
+    license?: TenantLicense;
+}
+
+interface TenantUserItem {
+    id: number;
+    name: string;
+    email: string;
+    username: string | null;
+    nip: string | null;
+    role: 'admin' | 'principal';
+    created_at: string | null;
 }
 
 interface ThemeOption {
@@ -71,6 +94,27 @@ interface ThemeOption {
     primary_dark: string;
     primary_light: string;
     hero_gradient?: string;
+}
+
+interface CentralTutorialItem {
+    id: number;
+    title: string;
+    youtube_url: string;
+    youtube_id: string;
+    description: string | null;
+    target_roles: string[];
+    order: number;
+    is_active: boolean;
+    thumbnail_url: string;
+    embed_url: string;
+}
+
+interface TutorialRoleOption {
+    key: string;
+    name: string;
+    badge: string;
+    description: string;
+    color: string;
 }
 
 interface CentralDashboardProps {
@@ -90,6 +134,8 @@ interface CentralDashboardProps {
     };
     themes: ThemeOption[];
     currentTheme: string;
+    tutorials: CentralTutorialItem[];
+    tutorialRoles: Record<string, TutorialRoleOption>;
 }
 
 type DomainFilter = 'all' | 'subdomain' | 'custom';
@@ -108,6 +154,8 @@ export default function CentralDashboard({
     central,
     themes = [],
     currentTheme = 'sd-orange',
+    tutorials = [],
+    tutorialRoles = {},
 }: CentralDashboardProps) {
     const { flash } = usePage<{
         flash?: { success?: string; error?: string };
@@ -121,12 +169,69 @@ export default function CentralDashboard({
         null,
     );
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-    const [activeMenu, setActiveMenu] = useState<'tenants' | 'theme'>(
+    const [activeMenu, setActiveMenu] = useState<'tenants' | 'tutorials' | 'theme'>(
         'tenants',
     );
     const [selectedTheme, setSelectedTheme] = useState<string>(currentTheme);
     const [themeLevelFilter, setThemeLevelFilter] = useState<string>('ALL');
     const [savingTheme, setSavingTheme] = useState(false);
+
+    // Central Video Tutorial modal states
+    const [tutorialModalOpen, setTutorialModalOpen] = useState(false);
+    const [editingTutorial, setEditingTutorial] =
+        useState<CentralTutorialItem | null>(null);
+    const [syncingTutorials, setSyncingTutorials] = useState(false);
+    const tutorialForm = useForm<{
+        title: string;
+        youtube_url: string;
+        description: string;
+        target_roles: string[];
+        order: number;
+        is_active: boolean;
+    }>({
+        title: '',
+        youtube_url: '',
+        description: '',
+        target_roles: ['teacher'],
+        order: 0,
+        is_active: true,
+    });
+
+    // License modal states
+    const [licenseTenant, setLicenseTenant] = useState<TenantItem | null>(null);
+    const licenseForm = useForm<{
+        license_starts_at: string;
+        license_expires_at: string;
+    }>({
+        license_starts_at: '',
+        license_expires_at: '',
+    });
+
+    // Tenant Users (Admin & Kepala Sekolah) modal states
+    const [manageUsersTenant, setManageUsersTenant] =
+        useState<TenantItem | null>(null);
+    const [tenantUsers, setTenantUsers] = useState<TenantUserItem[]>([]);
+    const [loadingUsers, setLoadingUsers] = useState(false);
+    const [editingUser, setEditingUser] = useState<TenantUserItem | null>(null);
+    const [showUserForm, setShowUserForm] = useState(false);
+    const [savingUser, setSavingUser] = useState(false);
+    const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
+    const [userErrors, setUserErrors] = useState<Record<string, string[]>>({});
+    const [userFormData, setUserFormData] = useState<{
+        name: string;
+        email: string;
+        username: string;
+        nip: string;
+        role: 'admin' | 'principal';
+        password: string;
+    }>({
+        name: '',
+        email: '',
+        username: '',
+        nip: '',
+        role: 'admin',
+        password: '',
+    });
 
     // Modal states
     const [createOpen, setCreateOpen] = useState(false);
@@ -252,6 +357,51 @@ export default function CentralDashboard({
         });
     };
 
+    const openLicenseModal = (tenant: TenantItem) => {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        licenseForm.setData({
+            license_starts_at: tenant.license?.starts_at ?? todayStr,
+            license_expires_at: tenant.license?.expires_at ?? '',
+        });
+        licenseForm.clearErrors();
+        setLicenseTenant(tenant);
+    };
+
+    const applyLicensePreset = (months: number | null) => {
+        if (months === null) {
+            licenseForm.setData({
+                license_starts_at: '',
+                license_expires_at: '',
+            });
+            return;
+        }
+
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const startStr = licenseForm.data.license_starts_at || todayStr;
+        const endDate = new Date(`${startStr}T00:00:00`);
+        endDate.setMonth(endDate.getMonth() + months);
+        const yyyy = endDate.getFullYear();
+        const mm = String(endDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(endDate.getDate()).padStart(2, '0');
+
+        licenseForm.setData({
+            license_starts_at: startStr,
+            license_expires_at: `${yyyy}-${mm}-${dd}`,
+        });
+    };
+
+    const handleLicenseSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!licenseTenant) return;
+
+        licenseForm.patch(`/admin/tenants/${licenseTenant.id}/license`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setLicenseTenant(null);
+            },
+        });
+    };
+
     const handleDeleteDomain = (domain: TenantDomain) => {
         router.delete(`/admin/domains/${domain.id}`, {
             preserveScroll: true,
@@ -312,6 +462,87 @@ export default function CentralDashboard({
         );
     };
 
+    const openCreateTutorialModal = () => {
+        setEditingTutorial(null);
+        tutorialForm.setData({
+            title: '',
+            youtube_url: '',
+            description: '',
+            target_roles: ['teacher'],
+            order: tutorials.length + 1,
+            is_active: true,
+        });
+        tutorialForm.clearErrors();
+        setTutorialModalOpen(true);
+    };
+
+    const openEditTutorialModal = (item: CentralTutorialItem) => {
+        setEditingTutorial(item);
+        tutorialForm.setData({
+            title: item.title,
+            youtube_url: item.youtube_url,
+            description: item.description ?? '',
+            target_roles: item.target_roles ?? ['teacher'],
+            order: item.order ?? 0,
+            is_active: item.is_active,
+        });
+        tutorialForm.clearErrors();
+        setTutorialModalOpen(true);
+    };
+
+    const toggleTutorialRole = (roleKey: string) => {
+        const current = tutorialForm.data.target_roles;
+        if (roleKey === 'all') {
+            tutorialForm.setData(
+                'target_roles',
+                current.includes('all') ? [] : ['all'],
+            );
+            return;
+        }
+        const withoutAll = current.filter((r) => r !== 'all');
+        if (withoutAll.includes(roleKey)) {
+            tutorialForm.setData(
+                'target_roles',
+                withoutAll.filter((r) => r !== roleKey),
+            );
+        } else {
+            tutorialForm.setData('target_roles', [...withoutAll, roleKey]);
+        }
+    };
+
+    const handleTutorialSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (editingTutorial) {
+            tutorialForm.put(`/admin/tutorials/${editingTutorial.id}`, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setTutorialModalOpen(false);
+                    setEditingTutorial(null);
+                },
+            });
+        } else {
+            tutorialForm.post('/admin/tutorials', {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setTutorialModalOpen(false);
+                    tutorialForm.reset();
+                },
+            });
+        }
+    };
+
+    const handleSyncAllTutorials = () => {
+        setSyncingTutorials(true);
+        router.post(
+            '/admin/tutorials/sync-all',
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setSyncingTutorials(false),
+            },
+        );
+    };
+
     const themeLevels = useMemo(() => {
         const levels = Array.from(new Set(themes.map((t) => t.level)));
         return ['ALL', ...levels];
@@ -321,6 +552,157 @@ export default function CentralDashboard({
         if (themeLevelFilter === 'ALL') return themes;
         return themes.filter((t) => t.level === themeLevelFilter);
     }, [themes, themeLevelFilter]);
+
+    const getCsrfToken = (): string => {
+        return (
+            document
+                .querySelector('meta[name="csrf-token"]')
+                ?.getAttribute('content') ?? ''
+        );
+    };
+
+    const resetUserForm = (role: 'admin' | 'principal' = 'admin') => {
+        setEditingUser(null);
+        setUserErrors({});
+        setUserFormData({
+            name: '',
+            email: '',
+            username: '',
+            nip: '',
+            role,
+            password: '',
+        });
+    };
+
+    const openManageUsers = async (tenant: TenantItem) => {
+        setManageUsersTenant(tenant);
+        setShowUserForm(false);
+        resetUserForm();
+        setLoadingUsers(true);
+        setTenantUsers([]);
+
+        try {
+            const response = await fetch(`/admin/tenants/${tenant.id}/users`, {
+                headers: { Accept: 'application/json' },
+            });
+            const data = (await response.json()) as {
+                users?: TenantUserItem[];
+                message?: string;
+            };
+            if (!response.ok) {
+                toast.error(data.message || 'Gagal memuat user sekolah.');
+            } else {
+                setTenantUsers(data.users ?? []);
+            }
+        } catch {
+            toast.error('Terjadi kesalahan jaringan saat memuat user.');
+        } finally {
+            setLoadingUsers(false);
+        }
+    };
+
+    const startEditTenantUser = (user: TenantUserItem) => {
+        setEditingUser(user);
+        setUserErrors({});
+        setUserFormData({
+            name: user.name,
+            email: user.email,
+            username: user.username ?? '',
+            nip: user.nip ?? '',
+            role: user.role,
+            password: '',
+        });
+        setShowUserForm(true);
+    };
+
+    const handleSaveTenantUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!manageUsersTenant) return;
+
+        setSavingUser(true);
+        setUserErrors({});
+
+        const url = editingUser
+            ? `/admin/tenants/${manageUsersTenant.id}/users/${editingUser.id}`
+            : `/admin/tenants/${manageUsersTenant.id}/users`;
+
+        try {
+            const response = await fetch(url, {
+                method: editingUser ? 'PUT' : 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                },
+                body: JSON.stringify(userFormData),
+            });
+
+            const data = (await response.json()) as {
+                user?: TenantUserItem;
+                message?: string;
+                errors?: Record<string, string[]>;
+            };
+
+            if (!response.ok) {
+                if (data.errors) {
+                    setUserErrors(data.errors);
+                }
+                toast.error(data.message || 'Gagal menyimpan data user.');
+                return;
+            }
+
+            if (data.user) {
+                if (editingUser) {
+                    setTenantUsers((prev) =>
+                        prev.map((u) =>
+                            u.id === data.user!.id ? data.user! : u,
+                        ),
+                    );
+                } else {
+                    setTenantUsers((prev) => [...prev, data.user!]);
+                }
+            }
+
+            toast.success(data.message || 'User berhasil disimpan.');
+            setShowUserForm(false);
+            resetUserForm();
+        } catch {
+            toast.error('Terjadi kesalahan saat menyimpan user.');
+        } finally {
+            setSavingUser(false);
+        }
+    };
+
+    const handleDeleteTenantUser = async (user: TenantUserItem) => {
+        if (!manageUsersTenant) return;
+        setDeletingUserId(user.id);
+
+        try {
+            const response = await fetch(
+                `/admin/tenants/${manageUsersTenant.id}/users/${user.id}`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN': getCsrfToken(),
+                    },
+                },
+            );
+
+            const data = (await response.json()) as { message?: string };
+            if (!response.ok) {
+                toast.error(data.message || 'Gagal menghapus user.');
+                return;
+            }
+
+            setTenantUsers((prev) => prev.filter((u) => u.id !== user.id));
+            toast.success(data.message || 'User berhasil dihapus.');
+        } catch {
+            toast.error('Terjadi kesalahan saat menghapus user.');
+        } finally {
+            setDeletingUserId(null);
+        }
+    };
 
     const previewCreateUrl = useMemo(() => {
         const raw = createForm.data.domain.trim().toLowerCase();
@@ -393,6 +775,21 @@ export default function CentralDashboard({
                         >
                             <Building2 className="h-4 w-4" />
                             Sekolah & Domain
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setActiveMenu('tutorials');
+                                setMobileSidebarOpen(false);
+                            }}
+                            className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
+                                activeMenu === 'tutorials'
+                                    ? 'border border-[var(--brand-primary,#FF6B35)]/30 bg-[var(--brand-primary-light,#FFF0EB)] font-black text-[var(--brand-primary,#FF6B35)] shadow-2xs dark:border-[var(--brand-primary,#FF6B35)]/40 dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:text-white'
+                                    : 'font-bold text-gray-600 hover:bg-gray-100 hover:text-[var(--brand-primary,#FF6B35)] dark:text-gray-300 dark:hover:bg-[#2D234A]/60 dark:hover:text-white'
+                            }`}
+                        >
+                            <PlayCircle className="h-4 w-4" />
+                            Video Tutorial
                         </button>
                         <button
                             type="button"
@@ -504,7 +901,169 @@ export default function CentralDashboard({
                     </header>
 
                 <main className="relative z-10 mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-                    {activeMenu === 'theme' ? (
+                    {activeMenu === 'tutorials' ? (
+                        <div className="space-y-6">
+                            <Card className="rounded-2xl border-[#E8E8E8] bg-white/90 shadow-xs dark:border-[#2D234A] dark:bg-[#18122B]/90">
+                                <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <CardTitle className="flex items-center gap-2 text-lg font-black">
+                                            <PlayCircle className="h-5 w-5 text-[var(--brand-primary,#FF6B35)]" />
+                                            Manajemen Video Tutorial Global
+                                        </CardTitle>
+                                        <CardDescription className="mt-1">
+                                            Setiap video tutorial yang dibuat, diubah, atau dihapus di sini akan otomatis disinkronkan ke seluruh tenan sesuai target role.
+                                        </CardDescription>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            disabled={syncingTutorials || tutorials.length === 0}
+                                            onClick={handleSyncAllTutorials}
+                                            className="rounded-xl font-bold"
+                                        >
+                                            <RefreshCw
+                                                className={`mr-1.5 h-3.5 w-3.5 ${syncingTutorials ? 'animate-spin' : ''}`}
+                                            />
+                                            {syncingTutorials
+                                                ? 'Menyinkronkan...'
+                                                : 'Sync ke Semua Tenan'}
+                                        </Button>
+                                        <Button
+                                            variant="primary"
+                                            size="sm"
+                                            onClick={openCreateTutorialModal}
+                                            className="rounded-xl font-bold shadow-brand"
+                                        >
+                                            <Plus className="mr-1.5 h-4 w-4" />
+                                            Tambah Video Tutorial
+                                        </Button>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    {tutorials.length === 0 ? (
+                                        <div className="rounded-2xl border border-dashed border-[#E8E8E8] py-12 text-center dark:border-[#2D234A]">
+                                            <PlayCircle className="mx-auto mb-3 h-10 w-10 text-[#FF6B35]/60" />
+                                            <div className="text-sm font-bold">
+                                                Belum ada video tutorial global
+                                            </div>
+                                            <p className="mt-1 text-xs text-gray-500">
+                                                Tambahkan video tutorial YouTube untuk otomatis masuk ke menu Video Tutorial setiap sekolah.
+                                            </p>
+                                            <Button
+                                                variant="primary"
+                                                size="sm"
+                                                onClick={openCreateTutorialModal}
+                                                className="mt-4 rounded-xl font-bold shadow-brand"
+                                            >
+                                                <Plus className="mr-1.5 h-4 w-4" />
+                                                Tambah Video Pertama
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                            {tutorials.map((item) => (
+                                                <div
+                                                    key={item.id}
+                                                    className="flex flex-col overflow-hidden rounded-2xl border border-[#E8E8E8] bg-white shadow-2xs dark:border-[#2D234A] dark:bg-[#130E24]"
+                                                >
+                                                    <div className="relative aspect-video bg-gray-100 dark:bg-gray-900">
+                                                        <img
+                                                            src={item.thumbnail_url}
+                                                            alt={item.title}
+                                                            className="h-full w-full object-cover"
+                                                        />
+                                                        <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
+                                                            <span
+                                                                className={`rounded-lg px-2 py-0.5 text-[10px] font-bold shadow-xs ${
+                                                                    item.is_active
+                                                                        ? 'bg-emerald-500 text-white'
+                                                                        : 'bg-gray-700 text-gray-200'
+                                                                }`}
+                                                            >
+                                                                {item.is_active
+                                                                    ? 'Aktif'
+                                                                    : 'Nonaktif'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex flex-1 flex-col p-4">
+                                                        <div className="text-sm font-black text-gray-900 line-clamp-2 dark:text-white">
+                                                            {item.title}
+                                                        </div>
+                                                        {item.description && (
+                                                            <p className="mt-1 line-clamp-2 text-xs text-gray-500 dark:text-gray-400">
+                                                                {item.description}
+                                                            </p>
+                                                        )}
+
+                                                        <div className="mt-3 flex flex-wrap gap-1.5">
+                                                            {item.target_roles.map((r) => (
+                                                                <span
+                                                                    key={r}
+                                                                    className="rounded-md bg-[#FFF0EB] px-2 py-0.5 text-[10px] font-bold text-[#FF6B35] dark:bg-[#331C1A] dark:text-[#FF8C5A]"
+                                                                >
+                                                                    {r === 'all'
+                                                                        ? 'Semua Peran'
+                                                                        : tutorialRoles[r]?.badge || r}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+
+                                                        <div className="mt-4 flex items-center justify-between border-t border-[#E8E8E8] pt-3 dark:border-[#2D234A]">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    router.patch(
+                                                                        `/admin/tutorials/${item.id}/toggle`,
+                                                                        {},
+                                                                        { preserveScroll: true },
+                                                                    )
+                                                                }
+                                                                className="text-xs font-bold text-gray-600 hover:text-[var(--brand-primary,#FF6B35)] dark:text-gray-300"
+                                                            >
+                                                                {item.is_active
+                                                                    ? 'Nonaktifkan'
+                                                                    : 'Aktifkan'}
+                                                            </button>
+                                                            <div className="flex items-center gap-1">
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8"
+                                                                    onClick={() =>
+                                                                        openEditTutorialModal(item)
+                                                                    }
+                                                                >
+                                                                    <Pencil className="h-3.5 w-3.5 text-gray-500" />
+                                                                </Button>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8 text-rose-500 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/50"
+                                                                    onClick={() =>
+                                                                        router.delete(
+                                                                            `/admin/tutorials/${item.id}`,
+                                                                            { preserveScroll: true },
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
+                    ) : activeMenu === 'theme' ? (
                         <div className="space-y-6">
                             <Card className="rounded-2xl border-[#E8E8E8] bg-white/90 shadow-xs dark:border-[#2D234A] dark:bg-[#18122B]/90">
                                 <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -780,6 +1339,47 @@ export default function CentralDashboard({
                                                     >
                                                         ID: {tenant.id}
                                                     </Badge>
+                                                    {tenant.license && (
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className={`text-[11px] font-bold ${
+                                                                tenant.license
+                                                                    .status ===
+                                                                'expired'
+                                                                    ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'
+                                                                    : tenant
+                                                                            .license
+                                                                            .status ===
+                                                                        'upcoming'
+                                                                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
+                                                                      : tenant
+                                                                              .license
+                                                                              .status ===
+                                                                          'active'
+                                                                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                                                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                                                            }`}
+                                                        >
+                                                            {tenant.license
+                                                                .status ===
+                                                            'expired'
+                                                                ? 'Lisensi Expired'
+                                                                : tenant.license
+                                                                        .status ===
+                                                                    'upcoming'
+                                                                  ? `Aktif ${tenant.license.starts_at}`
+                                                                  : tenant
+                                                                          .license
+                                                                          .status ===
+                                                                      'active'
+                                                                    ? tenant
+                                                                          .license
+                                                                          .expires_at
+                                                                        ? `Lisensi Aktif · Sisa ${tenant.license.days_remaining} hari`
+                                                                        : 'Lisensi Aktif'
+                                                                    : 'Tanpa Batas'}
+                                                        </Badge>
+                                                    )}
                                                 </div>
                                                 <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
                                                     <span className="inline-flex items-center gap-1 font-mono">
@@ -806,6 +1406,26 @@ export default function CentralDashboard({
                                         </div>
 
                                         <div className="flex flex-wrap items-center gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() =>
+                                                    openLicenseModal(tenant)
+                                                }
+                                            >
+                                                <CalendarClock className="mr-1.5 h-3.5 w-3.5" />
+                                                Lisensi
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() =>
+                                                    void openManageUsers(tenant)
+                                                }
+                                            >
+                                                <Users className="mr-1.5 h-3.5 w-3.5" />
+                                                Admin & Kepsek
+                                            </Button>
                                             <Button
                                                 variant="outline"
                                                 size="sm"
@@ -1356,6 +1976,641 @@ export default function CentralDashboard({
                             {deleting ? 'Menghapus...' : 'Hapus Permanen'}
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal: Tambah / Edit Video Tutorial Global */}
+            <Dialog
+                open={tutorialModalOpen}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setTutorialModalOpen(false);
+                        setEditingTutorial(null);
+                    }
+                }}
+            >
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <PlayCircle className="h-5 w-5 text-[var(--brand-primary,#FF6B35)]" />
+                            {editingTutorial
+                                ? 'Edit Video Tutorial'
+                                : 'Tambah Video Tutorial Baru'}
+                        </DialogTitle>
+                        <DialogDescription>
+                            Video akan otomatis masuk ke seluruh tenan sesuai
+                            target peran (role) yang dipilih.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={handleTutorialSubmit} className="space-y-4">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="ct-title">Judul Video</Label>
+                            <Input
+                                id="ct-title"
+                                placeholder="Contoh: Panduan Input Presensi Harian"
+                                value={tutorialForm.data.title}
+                                onChange={(e) =>
+                                    tutorialForm.setData('title', e.target.value)
+                                }
+                                required
+                            />
+                            {tutorialForm.errors.title && (
+                                <p className="text-xs text-rose-500">
+                                    {tutorialForm.errors.title}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label htmlFor="ct-youtube">URL YouTube</Label>
+                            <Input
+                                id="ct-youtube"
+                                placeholder="https://www.youtube.com/watch?v=..."
+                                value={tutorialForm.data.youtube_url}
+                                onChange={(e) =>
+                                    tutorialForm.setData(
+                                        'youtube_url',
+                                        e.target.value,
+                                    )
+                                }
+                                required
+                            />
+                            {tutorialForm.errors.youtube_url && (
+                                <p className="text-xs text-rose-500">
+                                    {tutorialForm.errors.youtube_url}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label htmlFor="ct-desc">
+                                Deskripsi Singkat (Opsional)
+                            </Label>
+                            <textarea
+                                id="ct-desc"
+                                rows={2}
+                                placeholder="Penjelasan singkat isi video..."
+                                value={tutorialForm.data.description}
+                                onChange={(e) =>
+                                    tutorialForm.setData(
+                                        'description',
+                                        e.target.value,
+                                    )
+                                }
+                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Target Role di Tenan</Label>
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => toggleTutorialRole('all')}
+                                    className={`rounded-xl border px-3 py-1.5 text-xs font-bold transition-all ${
+                                        tutorialForm.data.target_roles.includes(
+                                            'all',
+                                        )
+                                            ? 'border-[var(--brand-primary,#FF6B35)] bg-[var(--brand-primary-light,#FFF0EB)] text-[var(--brand-primary,#FF6B35)]'
+                                            : 'border-[#E8E8E8] text-gray-600 dark:border-[#2D234A] dark:text-gray-300'
+                                    }`}
+                                >
+                                    Semua Peran
+                                </button>
+                                {Object.values(tutorialRoles).map((r) => {
+                                    const active =
+                                        tutorialForm.data.target_roles.includes(
+                                            r.key,
+                                        );
+                                    return (
+                                        <button
+                                            key={r.key}
+                                            type="button"
+                                            onClick={() =>
+                                                toggleTutorialRole(r.key)
+                                            }
+                                            className={`rounded-xl border px-3 py-1.5 text-xs font-bold transition-all ${
+                                                active
+                                                    ? 'border-[var(--brand-primary,#FF6B35)] bg-[var(--brand-primary-light,#FFF0EB)] text-[var(--brand-primary,#FF6B35)]'
+                                                    : 'border-[#E8E8E8] text-gray-600 dark:border-[#2D234A] dark:text-gray-300'
+                                            }`}
+                                        >
+                                            {r.badge}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            {tutorialForm.errors.target_roles && (
+                                <p className="text-xs text-rose-500">
+                                    {tutorialForm.errors.target_roles}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label htmlFor="ct-order">Urutan Tampil</Label>
+                                <Input
+                                    id="ct-order"
+                                    type="number"
+                                    min={0}
+                                    value={tutorialForm.data.order}
+                                    onChange={(e) =>
+                                        tutorialForm.setData(
+                                            'order',
+                                            Number(e.target.value) || 0,
+                                        )
+                                    }
+                                />
+                            </div>
+                            <div className="flex items-end pb-2">
+                                <label className="flex cursor-pointer items-center gap-2 text-xs font-bold">
+                                    <input
+                                        type="checkbox"
+                                        checked={tutorialForm.data.is_active}
+                                        onChange={(e) =>
+                                            tutorialForm.setData(
+                                                'is_active',
+                                                e.target.checked,
+                                            )
+                                        }
+                                        className="rounded border-gray-300"
+                                    />
+                                    Aktifkan langsung di tenan
+                                </label>
+                            </div>
+                        </div>
+
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => setTutorialModalOpen(false)}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                disabled={tutorialForm.processing}
+                                className="rounded-xl font-bold shadow-brand"
+                            >
+                                {tutorialForm.processing
+                                    ? 'Menyimpan & Sync...'
+                                    : editingTutorial
+                                      ? 'Simpan & Sync'
+                                      : 'Tambah & Sync ke Tenan'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal: Kelola Lisensi Tenant */}
+            <Dialog
+                open={Boolean(licenseTenant)}
+                onOpenChange={(open) => !open && setLicenseTenant(null)}
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <CalendarClock className="h-5 w-5 text-[var(--brand-primary,#FF6B35)]" />
+                            Kelola Lisensi Aplikasi
+                        </DialogTitle>
+                        <DialogDescription>
+                            Atur tanggal mulai aktif dan tanggal berakhir untuk{' '}
+                            <span className="font-semibold text-gray-900 dark:text-white">
+                                {licenseTenant?.name}
+                            </span>
+                            . Jika melewati tanggal berakhir, aplikasi akan
+                            otomatis diarahkan ke halaman pembayaran.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={handleLicenseSubmit} className="space-y-4">
+                        <div className="space-y-1.5">
+                            <Label>Preset Cepat Masa Aktif</Label>
+                            <div className="flex flex-wrap gap-2">
+                                {[
+                                    { label: '+1 Bulan', months: 1 },
+                                    { label: '+6 Bulan', months: 6 },
+                                    { label: '+1 Tahun', months: 12 },
+                                    { label: 'Tanpa Batas', months: null },
+                                ].map((preset) => (
+                                    <button
+                                        key={preset.label}
+                                        type="button"
+                                        onClick={() =>
+                                            applyLicensePreset(preset.months)
+                                        }
+                                        className="rounded-lg border border-[#E8E8E8] bg-[#FFFBF7] px-2.5 py-1 text-xs font-bold text-gray-700 transition-colors hover:border-[#FF6B35] hover:text-[#FF6B35] dark:border-[#2D234A] dark:bg-[#130E24] dark:text-gray-200"
+                                    >
+                                        {preset.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div className="space-y-1.5">
+                                <Label htmlFor="license-starts-at">
+                                    Tanggal Mulai Aktif
+                                </Label>
+                                <Input
+                                    id="license-starts-at"
+                                    type="date"
+                                    value={licenseForm.data.license_starts_at}
+                                    onChange={(e) =>
+                                        licenseForm.setData(
+                                            'license_starts_at',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                                {licenseForm.errors.license_starts_at && (
+                                    <p className="text-xs text-rose-500">
+                                        {licenseForm.errors.license_starts_at}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label htmlFor="license-expires-at">
+                                    Tanggal Berakhir (Expired)
+                                </Label>
+                                <Input
+                                    id="license-expires-at"
+                                    type="date"
+                                    value={licenseForm.data.license_expires_at}
+                                    onChange={(e) =>
+                                        licenseForm.setData(
+                                            'license_expires_at',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                                {licenseForm.errors.license_expires_at && (
+                                    <p className="text-xs text-rose-500">
+                                        {licenseForm.errors.license_expires_at}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => setLicenseTenant(null)}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                disabled={licenseForm.processing}
+                                className="rounded-xl font-bold shadow-brand"
+                            >
+                                {licenseForm.processing
+                                    ? 'Menyimpan...'
+                                    : 'Simpan Lisensi'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal: Kelola Admin & Kepala Sekolah Tenant */}
+            <Dialog
+                open={Boolean(manageUsersTenant)}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setManageUsersTenant(null);
+                        setShowUserForm(false);
+                        resetUserForm();
+                    }
+                }}
+            >
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Users className="h-5 w-5 text-[var(--brand-primary,#FF6B35)]" />
+                            Admin & Kepala Sekolah
+                        </DialogTitle>
+                        <DialogDescription>
+                            Kelola akun dengan peran{' '}
+                            <span className="font-semibold">Admin</span> dan{' '}
+                            <span className="font-semibold">
+                                Kepala Sekolah
+                            </span>{' '}
+                            untuk{' '}
+                            <span className="font-semibold text-gray-900 dark:text-white">
+                                {manageUsersTenant?.name}
+                            </span>{' '}
+                            (<span className="font-mono">{manageUsersTenant?.database}</span>).
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <div className="text-xs font-bold text-gray-500">
+                                Daftar Akun ({tenantUsers.length})
+                            </div>
+                            <Button
+                                type="button"
+                                variant="primary"
+                                size="sm"
+                                onClick={() => {
+                                    if (showUserForm && !editingUser) {
+                                        setShowUserForm(false);
+                                    } else {
+                                        resetUserForm();
+                                        setShowUserForm(true);
+                                    }
+                                }}
+                                className="rounded-xl font-bold shadow-brand"
+                            >
+                                <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+                                {showUserForm && !editingUser
+                                    ? 'Tutup Form'
+                                    : 'Tambah Akun'}
+                            </Button>
+                        </div>
+
+                        {showUserForm && (
+                            <form
+                                onSubmit={handleSaveTenantUser}
+                                className="space-y-3 rounded-2xl border border-[#E8E8E8] bg-[#FFFBF7] p-4 dark:border-[#2D234A] dark:bg-[#130E24]"
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="text-xs font-black uppercase tracking-wider text-[var(--brand-primary,#FF6B35)]">
+                                        {editingUser
+                                            ? `Edit Akun: ${editingUser.name}`
+                                            : 'Tambah Akun Baru'}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowUserForm(false);
+                                            resetUserForm();
+                                        }}
+                                        className="text-xs font-semibold text-gray-400 hover:text-gray-600"
+                                    >
+                                        Batal
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div className="space-y-1">
+                                        <Label htmlFor="tu-name">
+                                            Nama Lengkap
+                                        </Label>
+                                        <Input
+                                            id="tu-name"
+                                            placeholder="Nama lengkap"
+                                            value={userFormData.name}
+                                            onChange={(e) =>
+                                                setUserFormData((prev) => ({
+                                                    ...prev,
+                                                    name: e.target.value,
+                                                }))
+                                            }
+                                            required
+                                        />
+                                        {userErrors.name && (
+                                            <p className="text-xs text-rose-500">
+                                                {userErrors.name[0]}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <Label htmlFor="tu-role">Peran</Label>
+                                        <select
+                                            id="tu-role"
+                                            value={userFormData.role}
+                                            onChange={(e) =>
+                                                setUserFormData((prev) => ({
+                                                    ...prev,
+                                                    role: e.target.value as
+                                                        | 'admin'
+                                                        | 'principal',
+                                                }))
+                                            }
+                                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs transition-colors focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                                        >
+                                            <option value="admin">
+                                                Admin Sekolah
+                                            </option>
+                                            <option value="principal">
+                                                Kepala Sekolah
+                                            </option>
+                                        </select>
+                                        {userErrors.role && (
+                                            <p className="text-xs text-rose-500">
+                                                {userErrors.role[0]}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <Label htmlFor="tu-email">Email</Label>
+                                        <Input
+                                            id="tu-email"
+                                            type="email"
+                                            placeholder="admin@sekolah.sch.id"
+                                            value={userFormData.email}
+                                            onChange={(e) =>
+                                                setUserFormData((prev) => ({
+                                                    ...prev,
+                                                    email: e.target.value,
+                                                }))
+                                            }
+                                            required
+                                        />
+                                        {userErrors.email && (
+                                            <p className="text-xs text-rose-500">
+                                                {userErrors.email[0]}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <Label htmlFor="tu-username">
+                                            Username (Opsional)
+                                        </Label>
+                                        <Input
+                                            id="tu-username"
+                                            placeholder="admin_sekolah"
+                                            value={userFormData.username}
+                                            onChange={(e) =>
+                                                setUserFormData((prev) => ({
+                                                    ...prev,
+                                                    username: e.target.value,
+                                                }))
+                                            }
+                                        />
+                                        {userErrors.username && (
+                                            <p className="text-xs text-rose-500">
+                                                {userErrors.username[0]}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <Label htmlFor="tu-nip">
+                                            NIP (Opsional)
+                                        </Label>
+                                        <Input
+                                            id="tu-nip"
+                                            placeholder="198001012005011001"
+                                            value={userFormData.nip}
+                                            onChange={(e) =>
+                                                setUserFormData((prev) => ({
+                                                    ...prev,
+                                                    nip: e.target.value,
+                                                }))
+                                            }
+                                        />
+                                        {userErrors.nip && (
+                                            <p className="text-xs text-rose-500">
+                                                {userErrors.nip[0]}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <Label htmlFor="tu-password">
+                                            Kata Sandi{' '}
+                                            {editingUser
+                                                ? '(Kosongkan jika tetap)'
+                                                : '(Min. 8 karakter)'}
+                                        </Label>
+                                        <Input
+                                            id="tu-password"
+                                            type="password"
+                                            placeholder="••••••••"
+                                            value={userFormData.password}
+                                            onChange={(e) =>
+                                                setUserFormData((prev) => ({
+                                                    ...prev,
+                                                    password: e.target.value,
+                                                }))
+                                            }
+                                            required={!editingUser}
+                                        />
+                                        {userErrors.password && (
+                                            <p className="text-xs text-rose-500">
+                                                {userErrors.password[0]}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end gap-2 pt-1">
+                                    <Button
+                                        type="submit"
+                                        variant="primary"
+                                        size="sm"
+                                        disabled={savingUser}
+                                        className="rounded-xl font-bold shadow-brand"
+                                    >
+                                        {savingUser
+                                            ? 'Menyimpan...'
+                                            : editingUser
+                                              ? 'Simpan Perubahan'
+                                              : 'Buat Akun'}
+                                    </Button>
+                                </div>
+                            </form>
+                        )}
+
+                        {loadingUsers ? (
+                            <div className="py-8 text-center text-xs text-gray-500">
+                                Memuat daftar Admin & Kepala Sekolah...
+                            </div>
+                        ) : tenantUsers.length === 0 ? (
+                            <div className="rounded-2xl border border-dashed border-[#E8E8E8] py-8 text-center text-xs text-gray-500 dark:border-[#2D234A]">
+                                Belum ada akun Admin atau Kepala Sekolah di
+                                tenant ini. Klik &ldquo;Tambah Akun&rdquo; untuk
+                                membuat.
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {tenantUsers.map((u) => (
+                                    <div
+                                        key={u.id}
+                                        className="flex flex-col gap-3 rounded-2xl border border-[#E8E8E8] bg-white p-3.5 sm:flex-row sm:items-center sm:justify-between dark:border-[#2D234A] dark:bg-[#18122B]"
+                                    >
+                                        <div className="min-w-0 space-y-1">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="text-sm font-bold text-gray-900 dark:text-white">
+                                                    {u.name}
+                                                </span>
+                                                <span
+                                                    className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                                                        u.role === 'principal'
+                                                            ? 'bg-[#E6FAF8] text-[#20B2AA] dark:bg-[#123836] dark:text-[#4ECDC4]'
+                                                            : 'bg-[#FFF0EB] text-[#FF6B35] dark:bg-[#331C1A] dark:text-[#FF8C5A]'
+                                                    }`}
+                                                >
+                                                    {u.role === 'principal'
+                                                        ? 'Kepala Sekolah'
+                                                        : 'Admin'}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-500 dark:text-gray-400">
+                                                <span>{u.email}</span>
+                                                {u.username && (
+                                                    <span className="font-mono">
+                                                        @{u.username}
+                                                    </span>
+                                                )}
+                                                {u.nip && (
+                                                    <span className="font-mono">
+                                                        NIP: {u.nip}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex shrink-0 items-center gap-1.5">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8"
+                                                title="Edit / Reset Password"
+                                                onClick={() =>
+                                                    startEditTenantUser(u)
+                                                }
+                                            >
+                                                <Pencil className="h-4 w-4 text-gray-500" />
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-rose-500 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/50"
+                                                title="Hapus akun"
+                                                disabled={
+                                                    deletingUserId === u.id
+                                                }
+                                                onClick={() =>
+                                                    void handleDeleteTenantUser(
+                                                        u,
+                                                    )
+                                                }
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </DialogContent>
             </Dialog>
         </>
