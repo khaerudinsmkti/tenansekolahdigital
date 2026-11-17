@@ -1,14 +1,14 @@
 {
     "id": "/?source=pwa",
-    "name": "Sekolah Digital",
-    "short_name": "Sekolah Digital",
-    "description": "Portal dan Aplikasi Presensi Siswa Resmi - Sekolah Digital",
+    "name": "SD Digital Indonesia",
+    "short_name": "SD Digital Indonesia",
+    "description": "Portal dan Aplikasi Presensi Siswa Resmi - SD Digital Indonesia",
     "start_url": "/?source=pwa",
     "scope": "/",
     "display": "standalone",
     "orientation": "portrait-primary",
     "background_color": "#FFFFFF",
-    "theme_color": "#0D9488",
+    "theme_color": "#FF6B35",
     "prefer_related_applications": false,
     "categories": [
         "education",
@@ -16,34 +16,28 @@
     ],
     "icons": [
         {
-            "src": "/icons/icon-192x192.png?v=1794801920",
+            "src": "/icons/icon-192x192.png?v=1794886105",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "/icons/icon-maskable-192x192.png?v=1794801920",
+            "src": "/icons/icon-maskable-192x192.png?v=1794886105",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "maskable"
         },
         {
-            "src": "/icons/icon-512x512.png?v=1794801920",
+            "src": "/icons/icon-512x512.png?v=1794886105",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "/icons/icon-maskable-512x512.png?v=1794801920",
+            "src": "/icons/icon-maskable-512x512.png?v=1794886105",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"
-        },
-        {
-            "src": "/storage/school/k0FQEmESlSfjjfyefOyY2ap1WcNitLsaZwQ9F2c2.webp?v=1794801920",
-            "sizes": "500x500",
-            "type": "image/webp",
-            "purpose": "any"
         }
     ]
 }

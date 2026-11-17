@@ -86,6 +86,7 @@ void createInertiaApp({
             case name === 'contact/public-index':
             case name.endsWith('/public-index'):
             case name.startsWith('public/'):
+            case name.startsWith('central/'):
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;

@@ -48,7 +48,12 @@ interface NavLinkItem {
 }
 
 export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
-    const { auth, school } = usePage<{ auth: any; school?: SchoolProp }>().props;
+    const { auth, school, isCentral, centralAdminAuthenticated } = usePage<{
+        auth: any;
+        school?: SchoolProp;
+        isCentral?: boolean;
+        centralAdminAuthenticated?: boolean;
+    }>().props;
     const url = usePage().url;
     const schoolName = school?.name || 'AbsensiKu SD';
     const logoUrl = school?.logo_url;
@@ -56,7 +61,59 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
 
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
     const [isOtherDrawerOpen, setIsOtherDrawerOpen] = useState<boolean>(false);
+    const [activeSection, setActiveSection] = useState<string>(() => {
+        if (typeof window !== 'undefined' && window.location.hash) {
+            return window.location.hash;
+        }
+        return '#beranda';
+    });
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!isCentral || typeof window === 'undefined') return;
+
+        const sectionIds = [
+            'beranda',
+            'fitur-lengkap',
+            'tema-sekolah',
+            'peran-pengguna',
+            'paket-harga',
+            'faq',
+        ];
+
+        const handleHashChange = () => {
+            if (window.location.hash) {
+                setActiveSection(window.location.hash);
+            }
+        };
+        window.addEventListener('hashchange', handleHashChange);
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                const visible = entries
+                    .filter((e) => e.isIntersecting)
+                    .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+                if (visible.length > 0 && visible[0].target.id) {
+                    setActiveSection(`#${visible[0].target.id}`);
+                }
+            },
+            {
+                rootMargin: '-20% 0px -55% 0px',
+                threshold: [0.1, 0.25, 0.5],
+            },
+        );
+
+        sectionIds.forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) observer.observe(el);
+        });
+
+        return () => {
+            window.removeEventListener('hashchange', handleHashChange);
+            observer.disconnect();
+        };
+    }, [isCentral]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -72,18 +129,51 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
     const isTeacherProfileActive = url.startsWith('/profil/guru');
     const isPortalActive = url === '/portal' || url.startsWith('/portal?');
 
-    const navLinks: NavLinkItem[] = [
+    const navLinks: NavLinkItem[] = isCentral
+        ? [
+              {
+                  title: 'Beranda',
+                  href: '#beranda',
+                  icon: Home,
+                  isActive: activeSection === '#beranda',
+              },
+              {
+                  title: 'Fitur',
+                  href: '#fitur-lengkap',
+                  icon: BarChart3,
+                  isActive: activeSection === '#fitur-lengkap',
+              },
+              {
+                  title: 'Tema',
+                  href: '#tema-sekolah',
+                  icon: Building2,
+                  isActive: activeSection === '#tema-sekolah',
+              },
+              {
+                  title: 'Peran',
+                  href: '#peran-pengguna',
+                  icon: Users,
+                  isActive: activeSection === '#peran-pengguna',
+              },
+              {
+                  title: 'Paket Harga',
+                  href: '#paket-harga',
+                  icon: School,
+                  isActive: activeSection === '#paket-harga',
+              },
+              {
+                  title: 'FAQ',
+                  href: '#faq',
+                  icon: GraduationCap,
+                  isActive: activeSection === '#faq',
+              },
+          ]
+        : [
         {
             title: 'Beranda',
             href: '/',
             icon: Home,
-            isActive: url === '/',
-        },
-        {
-            title: 'Portal Sekolah',
-            href: '/portal',
-            icon: School,
-            isActive: isPortalActive,
+            isActive: url === '/' || isPortalActive,
         },
         {
             title: 'Profil',
@@ -231,6 +321,11 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
                                 <Link
                                     key={item.href}
                                     href={item.href}
+                                    onClick={() => {
+                                        if (isCentral) {
+                                            setActiveSection(item.href);
+                                        }
+                                    }}
                                     className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
                                         item.isActive
                                             ? 'border border-[var(--brand-primary,#FF6B35)]/30 bg-[var(--brand-primary-light,#FFF0EB)] font-black text-[var(--brand-primary,#FF6B35)] shadow-2xs dark:border-[var(--brand-primary,#FF6B35)]/40 dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:text-white'
@@ -259,7 +354,29 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
                             </Button>
                         )}
 
-                        {auth.user ? (
+                        {isCentral ? (
+                            <Button
+                                asChild
+                                variant="primary"
+                                size="sm"
+                                className="rounded-xl px-3 py-1.5 text-xs font-bold shadow-xs"
+                            >
+                                <Link
+                                    href={
+                                        centralAdminAuthenticated
+                                            ? '/admin/dashboard'
+                                            : '/admin/login'
+                                    }
+                                >
+                                    <span>
+                                        {centralAdminAuthenticated
+                                            ? 'Dashboard Admin'
+                                            : 'Masuk Admin'}
+                                    </span>
+                                    <ArrowRight className="ml-1 size-3.5" />
+                                </Link>
+                            </Button>
+                        ) : auth.user ? (
                             <Button
                                 asChild
                                 variant="primary"
@@ -333,34 +450,64 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
 
                         {/* List of remaining menus */}
                         <div className="space-y-2 mt-4">
-                            {/* Portal Sekolah (Welcome) */}
-                            <Link
-                                href="/portal"
-                                onClick={() => setIsOtherDrawerOpen(false)}
-                                className={`flex items-center gap-3.5 rounded-2xl p-3.5 border transition-all ${
-                                    isPortalActive
-                                        ? 'border-[var(--brand-primary,#FF6B35)]/40 bg-[var(--brand-primary-light,#FFF0EB)] text-[var(--brand-primary,#FF6B35)] shadow-xs dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:border-[var(--brand-primary,#FF6B35)]/40 dark:text-white'
-                                        : 'border-gray-100 bg-gray-50/70 hover:bg-gray-100 text-gray-800 dark:border-gray-800 dark:bg-gray-800/40 dark:text-gray-200'
-                                }`}
-                            >
-                                <div
-                                    className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${
-                                        isPortalActive
-                                            ? 'bg-[var(--brand-primary,#FF6B35)] text-white shadow-xs'
-                                            : 'bg-[var(--brand-primary-light,#FFF0EB)] text-[var(--brand-primary,#FF6B35)] dark:bg-gray-800 dark:text-white'
-                                    }`}
-                                >
-                                    <School className="size-5" />
-                                </div>
-                                <div className="flex-1">
-                                    <div className="text-xs font-black">Portal Sekolah</div>
-                                    <div className="text-[10px] text-gray-500 dark:text-gray-400">
-                                        Sambutan Kepala Sekolah, Berita & Galeri Terkini
-                                    </div>
-                                </div>
-                                <ArrowRight className="size-4 text-gray-400" />
-                            </Link>
+                            {isCentral ? (
+                                <>
+                                    {navLinks.slice(5).map((item) => {
+                                        const Icon = item.icon;
+                                        return (
+                                            <a
+                                                key={item.href}
+                                                href={item.href}
+                                                onClick={() => {
+                                                    setActiveSection(item.href);
+                                                    setIsOtherDrawerOpen(false);
+                                                }}
+                                                className={`flex items-center gap-3.5 rounded-2xl border p-3.5 transition-all ${
+                                                    item.isActive
+                                                        ? 'border-[var(--brand-primary,#FF6B35)]/40 bg-[var(--brand-primary-light,#FFF0EB)] text-[var(--brand-primary,#FF6B35)] shadow-xs dark:border-[var(--brand-primary,#FF6B35)]/40 dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:text-white'
+                                                        : 'border-gray-100 bg-gray-50/70 text-gray-800 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-800/40 dark:text-gray-200'
+                                                }`}
+                                            >
+                                                <div
+                                                    className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${
+                                                        item.isActive
+                                                            ? 'bg-[var(--brand-primary,#FF6B35)] text-white shadow-xs'
+                                                            : 'bg-[var(--brand-primary-light,#FFF0EB)] text-[var(--brand-primary,#FF6B35)] dark:bg-gray-800 dark:text-white'
+                                                    }`}
+                                                >
+                                                    <Icon className="size-5" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="text-xs font-black">{item.title}</div>
+                                                </div>
+                                                <ArrowRight className="size-4 text-gray-400" />
+                                            </a>
+                                        );
+                                    })}
 
+                                    <div className="pt-2">
+                                        <Link
+                                            href={centralAdminAuthenticated ? '/admin/dashboard' : '/admin/login'}
+                                            onClick={() => setIsOtherDrawerOpen(false)}
+                                            className="flex items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-[var(--brand-primary,#FF6B35)] to-[var(--brand-primary-dark,#FF8C5A)] p-4 font-black text-white shadow-brand"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <LogIn className="size-5" />
+                                                <div className="text-left leading-tight">
+                                                    <div className="text-xs">
+                                                        {centralAdminAuthenticated ? 'Buka Dashboard Admin' : 'Masuk Admin Central'}
+                                                    </div>
+                                                    <div className="text-[10px] font-normal text-white/80">
+                                                        Kelola Sekolah, Subdomain & Domain
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <ArrowRight className="size-4" />
+                                        </Link>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
                             {/* Kalender */}
                             <Link
                                 href="/kalender"
@@ -485,56 +632,91 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
                                     </Link>
                                 )}
                             </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Mobile Bottom Navigation Bar (6 Menu: Beranda, Portal, Profil, Berita, Galeri, Lainnya) */}
+            {/* Mobile Bottom Navigation Bar */}
             <nav className="fixed bottom-0 left-0 right-0 z-40 flex h-16 items-center justify-around border-t border-gray-200/90 bg-white/95 px-1 pb-safe backdrop-blur-lg md:hidden dark:border-gray-800/90 dark:bg-[#18122B]/95 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
+                {isCentral ? (
+                    <>
+                        {navLinks.slice(0, 5).map((item) => {
+                            const Icon = item.icon;
+                            return (
+                                <a
+                                    key={item.href}
+                                    href={item.href}
+                                    onClick={() => setActiveSection(item.href)}
+                                    className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-1 transition-all active:scale-95 ${
+                                        item.isActive
+                                            ? 'font-black text-[var(--brand-primary,#FF6B35)]'
+                                            : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                                    }`}
+                                >
+                                    <div
+                                        className={`flex size-8 items-center justify-center rounded-xl transition-all ${
+                                            item.isActive
+                                                ? 'scale-105 border border-[var(--brand-primary,#FF6B35)]/35 bg-[var(--brand-primary-light,#FFF0EB)] text-[var(--brand-primary,#FF6B35)] shadow-2xs dark:border-[var(--brand-primary,#FF6B35)]/40 dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:text-white'
+                                                : 'text-gray-500 dark:text-gray-400'
+                                        }`}
+                                    >
+                                        <Icon className="size-4.5" />
+                                    </div>
+                                    <span className={`text-[10px] leading-none tracking-tight ${item.isActive ? 'font-black text-[var(--brand-primary,#FF6B35)]' : 'font-bold'}`}>
+                                        {item.title === 'Paket Harga' ? 'Harga' : item.title}
+                                    </span>
+                                </a>
+                            );
+                        })}
+
+                        <button
+                            type="button"
+                            onClick={() => setIsOtherDrawerOpen(true)}
+                            className={`relative flex flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 py-1 transition-all active:scale-95 ${
+                                activeSection === '#faq' || isOtherDrawerOpen
+                                    ? 'font-black text-[var(--brand-primary,#FF6B35)]'
+                                    : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                            }`}
+                        >
+                            <div
+                                className={`relative flex size-8.5 items-center justify-center rounded-xl transition-all ${
+                                    activeSection === '#faq' || isOtherDrawerOpen
+                                        ? 'scale-105 border border-[var(--brand-primary,#FF6B35)]/35 bg-[var(--brand-primary-light,#FFF0EB)] text-[var(--brand-primary,#FF6B35)] shadow-2xs dark:border-[var(--brand-primary,#FF6B35)]/40 dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:text-white'
+                                        : 'text-gray-500 dark:text-gray-400'
+                                }`}
+                            >
+                                <Menu className="size-4.5" />
+                            </div>
+                            <span className={`text-[10px] tracking-tight ${activeSection === '#faq' || isOtherDrawerOpen ? 'font-black text-[var(--brand-primary,#FF6B35)]' : 'font-bold'}`}>
+                                Lainnya
+                            </span>
+                        </button>
+                    </>
+                ) : (
+                    <>
                 {/* 1. Beranda */}
                 <Link
                     href="/"
                     className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-1 transition-all active:scale-95 ${
-                        url === '/'
+                        url === '/' || isPortalActive
                             ? 'font-black text-[var(--brand-primary,#FF6B35)]'
                             : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
                     }`}
                 >
                     <div
                         className={`flex size-8 items-center justify-center rounded-xl transition-all ${
-                            url === '/'
+                            url === '/' || isPortalActive
                                 ? 'bg-[var(--brand-primary-light,#FFF0EB)] text-[var(--brand-primary,#FF6B35)] border border-[var(--brand-primary,#FF6B35)]/35 dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:border-[var(--brand-primary,#FF6B35)]/40 dark:text-white scale-105 shadow-2xs'
                                 : 'text-gray-500 dark:text-gray-400'
                         }`}
                     >
                         <Home className="size-4.5" />
                     </div>
-                    <span className={`text-[10px] leading-none tracking-tight ${url === '/' ? 'text-[var(--brand-primary,#FF6B35)] font-black' : 'font-bold'}`}>
+                    <span className={`text-[10px] leading-none tracking-tight ${url === '/' || isPortalActive ? 'text-[var(--brand-primary,#FF6B35)] font-black' : 'font-bold'}`}>
                         Beranda
-                    </span>
-                </Link>
-
-                {/* 2. Portal Sekolah */}
-                <Link
-                    href="/portal"
-                    className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-1 transition-all active:scale-95 ${
-                        isPortalActive
-                            ? 'font-black text-[var(--brand-primary,#FF6B35)]'
-                            : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
-                    }`}
-                >
-                    <div
-                        className={`flex size-8 items-center justify-center rounded-xl transition-all ${
-                            isPortalActive
-                                ? 'bg-[var(--brand-primary-light,#FFF0EB)] text-[var(--brand-primary,#FF6B35)] border border-[var(--brand-primary,#FF6B35)]/35 dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:border-[var(--brand-primary,#FF6B35)]/40 dark:text-white scale-105 shadow-2xs'
-                                : 'text-gray-500 dark:text-gray-400'
-                        }`}
-                    >
-                        <School className="size-4.5" />
-                    </div>
-                    <span className={`text-[10px] leading-none tracking-tight ${isPortalActive ? 'text-[var(--brand-primary,#FF6B35)] font-black' : 'font-bold'}`}>
-                        Portal
                     </span>
                 </Link>
 
@@ -633,6 +815,8 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
                         Lainnya
                     </span>
                 </button>
+                    </>
+                )}
             </nav>
         </>
     );

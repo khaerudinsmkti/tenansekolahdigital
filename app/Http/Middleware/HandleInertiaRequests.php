@@ -35,13 +35,21 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        $user = $request->user();
+        $isTenant = function_exists('tenancy') && tenancy()->initialized;
+        $user = $isTenant ? $request->user() : null;
         $isDutyToday = $user ? $user->isDutyTeacherToday() : false;
-        $school = \App\Models\SchoolSetting::getSetting();
-        $schoolName = $school->name ?: config('app.name', 'AbsensiKu SD');
+        $school = $isTenant ? \App\Models\SchoolSetting::getSetting() : null;
+        $centralSchool = ! $isTenant ? [
+            'name' => config('app.name', 'SekolahDigital'),
+            'theme_color' => \App\Services\CentralSettingService::getThemeColor(),
+            'theme_data' => \App\Services\CentralSettingService::getThemeData(),
+        ] : null;
+        $schoolName = $school?->name ?: config('app.name', 'AbsensiKu SD');
 
         return [
             ...parent::share($request),
+            'isCentral' => ! $isTenant,
+            'centralAdminAuthenticated' => ! $isTenant && (bool) $request->session()->get('central_admin_authenticated', false),
             'name' => $schoolName,
             'auth' => [
                 'user' => $user ? array_merge($user->toArray(), [
@@ -55,7 +63,7 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn () => $request->session()->get('error'),
                 'contact_success' => fn () => $request->session()->get('contact_success'),
             ],
-            'school' => fn () => $school,
+            'school' => fn () => $isTenant ? $school : $centralSchool,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

@@ -32,11 +32,13 @@
         </style>
 
         @php
-            $schoolSetting = \App\Models\SchoolSetting::getSetting();
-            $schoolLogoUrl = $schoolSetting->logo_path ? '/storage/' . ltrim($schoolSetting->logo_path, '/') : null;
-            $appName = $schoolSetting->name ?: config('app.name', 'AbsensiKu SD');
-            $pwaVersion = $schoolSetting->updated_at ? $schoolSetting->updated_at->timestamp : (file_exists(public_path('manifest.json')) ? filemtime(public_path('manifest.json')) : time());
-            $themeData = \App\Services\ThemeService::getTheme($schoolSetting->theme_color ?? 'sd-orange');
+            $isTenant = function_exists('tenancy') && tenancy()->initialized;
+            $schoolSetting = $isTenant ? \App\Models\SchoolSetting::getSetting() : null;
+            $schoolLogoUrl = $schoolSetting?->logo_path ? '/storage/' . ltrim($schoolSetting->logo_path, '/') : null;
+            $appName = $schoolSetting?->name ?: config('app.name', 'AbsensiKu SD');
+            $pwaVersion = $schoolSetting?->updated_at ? $schoolSetting->updated_at->timestamp : (file_exists(public_path('manifest.json')) ? filemtime(public_path('manifest.json')) : time());
+            $themeColor = $isTenant ? ($schoolSetting?->theme_color ?? 'sd-orange') : \App\Services\CentralSettingService::getThemeColor();
+            $themeData = \App\Services\ThemeService::getTheme($themeColor);
         @endphp
 
         <script>

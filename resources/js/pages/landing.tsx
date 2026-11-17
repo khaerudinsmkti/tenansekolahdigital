@@ -638,8 +638,10 @@ export default function Landing({ themes = [] }: LandingProps) {
     const schoolName = school?.name || 'SekolahDigital';
 
     const availableThemes = themes.length > 0 ? themes : DEFAULT_THEMES;
+    const defaultThemeId =
+        availableThemes.find((t) => t.id === 'smp-biru')?.id ?? availableThemes[0].id;
     const [activeCategoryId, setActiveCategoryId] = useState<string>(FEATURE_CATEGORIES[0].id);
-    const [selectedThemeId, setSelectedThemeId] = useState<string>(availableThemes[0].id);
+    const [selectedThemeId, setSelectedThemeId] = useState<string>(defaultThemeId);
     const [themeLevelFilter, setThemeLevelFilter] = useState<string>('ALL');
     const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
@@ -662,7 +664,7 @@ export default function Landing({ themes = [] }: LandingProps) {
             <PwaInstallPrompt />
 
             {/* 1. HERO SECTION */}
-            <section className="relative overflow-hidden border-b border-gray-200/70 dark:border-[#2D234A]">
+            <section id="beranda" className="scroll-mt-20 relative overflow-hidden border-b border-gray-200/70 dark:border-[#2D234A]">
                 {/* Ambient Background Glows */}
                 <div
                     className="pointer-events-none absolute -top-28 -left-24 size-96 rounded-full opacity-20 blur-3xl"
@@ -874,7 +876,7 @@ export default function Landing({ themes = [] }: LandingProps) {
             </section>
 
             {/* 2. INTERACTIVE FEATURE EXPLORER */}
-            <section id="fitur-lengkap" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-12 lg:py-20">
+            <section id="fitur-lengkap" className="scroll-mt-20 mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-12 lg:py-20">
                 <div className="mx-auto max-w-3xl text-center space-y-3">
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-primary-light,#FFF0EB)] px-3.5 py-1 text-xs font-extrabold text-[var(--brand-primary,#FF6B35)] dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:text-orange-300">
                         <Zap className="size-3.5" />
@@ -992,7 +994,7 @@ export default function Landing({ themes = [] }: LandingProps) {
             </section>
 
             {/* 3. INTERACTIVE LIVE THEME SWITCHER DEMO */}
-            <section className="border-y border-gray-200/70 bg-white/70 py-14 sm:py-18 dark:border-[#2D234A] dark:bg-[#18122B]/50">
+            <section id="tema-sekolah" className="scroll-mt-20 border-y border-gray-200/70 bg-white/70 py-14 sm:py-18 dark:border-[#2D234A] dark:bg-[#18122B]/50">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-12">
                     <div className="grid items-center gap-10 lg:grid-cols-12">
                         {/* Left Theme Selector */}
@@ -1158,7 +1160,7 @@ export default function Landing({ themes = [] }: LandingProps) {
             </section>
 
             {/* 4. PWA & ROLE ECOSYSTEM */}
-            <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-12 lg:py-20">
+            <section id="peran-pengguna" className="scroll-mt-20 mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-12 lg:py-20">
                 <div className="mx-auto max-w-3xl text-center space-y-3">
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-100 px-3.5 py-1 text-xs font-extrabold text-teal-700 dark:bg-teal-950/70 dark:text-teal-300">
                         <Users className="size-3.5" />
@@ -1406,7 +1408,7 @@ export default function Landing({ themes = [] }: LandingProps) {
             </section>
 
             {/* 5. FAQ SECTION */}
-            <section className="border-t border-gray-200/70 bg-white/60 py-14 sm:py-18 dark:border-[#2D234A] dark:bg-[#18122B]/40">
+            <section id="faq" className="scroll-mt-20 border-t border-gray-200/70 bg-white/60 py-14 sm:py-18 dark:border-[#2D234A] dark:bg-[#18122B]/40">
                 <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
                     <div className="text-center space-y-2 mb-10">
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-primary-light,#FFF0EB)] px-3.5 py-1 text-xs font-extrabold text-[var(--brand-primary,#FF6B35)] dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:text-orange-300">
@@ -1455,10 +1457,11 @@ export default function Landing({ themes = [] }: LandingProps) {
             {/* 6. FINAL HIGH-CONVERTING CTA */}
             <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-12 lg:py-20">
                 <div
-                    className="relative overflow-hidden rounded-[32px] p-8 text-center text-white shadow-2xl sm:p-14"
+                    className="relative overflow-hidden rounded-[32px] p-8 text-center text-white shadow-2xl transition-all duration-500 sm:p-14"
                     style={{
                         background:
-                            'linear-gradient(135deg, var(--brand-primary, #FF6B35) 0%, #E11D48 55%, #7C3AED 100%)',
+                            previewTheme.hero_gradient ||
+                            `linear-gradient(135deg, ${previewTheme.primary} 0%, ${previewTheme.primary_dark} 100%)`,
                     }}
                 >
                     <div className="mx-auto max-w-2xl space-y-5">
