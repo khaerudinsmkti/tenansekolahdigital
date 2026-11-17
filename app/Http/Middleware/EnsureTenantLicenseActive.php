@@ -6,6 +6,7 @@ namespace App\Http\Middleware;
 
 use App\Models\SchoolSetting;
 use App\Models\Tenant;
+use App\Services\CentralSettingService;
 use App\Services\TenantLicenseService;
 use Closure;
 use Illuminate\Http\Request;
@@ -54,12 +55,7 @@ class EnsureTenantLicenseActive
             'schoolName' => $schoolName,
             'tenantId' => $tenant->id,
             'host' => $request->getHost(),
-            'billing' => [
-                'whatsapp' => (string) env('CENTRAL_BILLING_WHATSAPP', '6281947153579'),
-                'bank_name' => (string) env('CENTRAL_BILLING_BANK', 'Bank BRI'),
-                'account_number' => (string) env('CENTRAL_BILLING_ACCOUNT', '1234567890'),
-                'account_name' => (string) env('CENTRAL_BILLING_OWNER', 'Khaerudin'),
-            ],
+            'billing' => CentralSettingService::getBillingSettings(),
         ])->toResponse($request)->setStatusCode(403);
     }
 }

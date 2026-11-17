@@ -84,6 +84,7 @@ class TenantController extends Controller
             ],
             'themes' => array_values(ThemeService::getThemes()),
             'currentTheme' => CentralSettingService::getThemeColor(),
+            'billingSettings' => CentralSettingService::getBillingSettings(),
             'tutorials' => CentralTutorial::query()->orderBy('order')->latest('id')->get(),
             'tutorialRoles' => Tutorial::getAvailableRoles(),
         ]);
@@ -102,6 +103,21 @@ class TenantController extends Controller
         $themeName = ThemeService::getTheme($validated['theme_color'])['name'] ?? $validated['theme_color'];
 
         return back()->with('success', "Tema warna landing page central berhasil diubah ke \"{$themeName}\".");
+    }
+
+    public function updateBillingSettings(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'whatsapp' => ['required', 'string', 'max:30'],
+            'bank_name' => ['required', 'string', 'max:80'],
+            'account_number' => ['required', 'string', 'max:60'],
+            'account_name' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'email', 'max:190'],
+        ]);
+
+        CentralSettingService::setBillingSettings($validated);
+
+        return back()->with('success', 'Pengaturan rekening, nomor HP/WhatsApp, dan email admin central berhasil disimpan.');
     }
 
     public function store(Request $request): RedirectResponse

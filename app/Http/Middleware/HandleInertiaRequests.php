@@ -46,13 +46,21 @@ class HandleInertiaRequests extends Middleware
         ] : null;
         $schoolName = $school?->name ?: config('app.name', 'AbsensiKu SD');
 
+        $tenantLicense = $isTenant && tenant() instanceof \App\Models\Tenant
+            ? \App\Services\TenantLicenseService::getStatus(tenant())
+            : null;
+        $isLicenseExpiringSoon = $tenantLicense !== null
+            && $tenantLicense['status'] === 'active'
+            && $tenantLicense['days_remaining'] !== null
+            && $tenantLicense['days_remaining'] <= 30;
+
         return [
             ...parent::share($request),
             'isCentral' => ! $isTenant,
             'centralAdminAuthenticated' => ! $isTenant && (bool) $request->session()->get('central_admin_authenticated', false),
-            'tenantLicense' => $isTenant && tenant() instanceof \App\Models\Tenant
-                ? \App\Services\TenantLicenseService::getStatus(tenant())
-                : null,
+            'tenantLicense' => $tenantLicense,
+            'centralBilling' => $isLicenseExpiringSoon ? \App\Services\CentralSettingService::getBillingSettings() : null,
+            'sessionLoginKey' => $isTenant && $user ? sha1((string) $request->session()->getId()) : null,
             'name' => $schoolName,
             'auth' => [
                 'user' => $user ? array_merge($user->toArray(), [

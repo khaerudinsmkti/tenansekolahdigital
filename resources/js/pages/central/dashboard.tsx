@@ -4,6 +4,7 @@ import {
     CalendarClock,
     Check,
     Copy,
+    CreditCard,
     Database,
     ExternalLink,
     Globe,
@@ -134,6 +135,13 @@ interface CentralDashboardProps {
     };
     themes: ThemeOption[];
     currentTheme: string;
+    billingSettings: {
+        whatsapp: string;
+        bank_name: string;
+        account_number: string;
+        account_name: string;
+        email: string;
+    };
     tutorials: CentralTutorialItem[];
     tutorialRoles: Record<string, TutorialRoleOption>;
 }
@@ -154,6 +162,7 @@ export default function CentralDashboard({
     central,
     themes = [],
     currentTheme = 'sd-orange',
+    billingSettings,
     tutorials = [],
     tutorialRoles = {},
 }: CentralDashboardProps) {
@@ -169,12 +178,20 @@ export default function CentralDashboard({
         null,
     );
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-    const [activeMenu, setActiveMenu] = useState<'tenants' | 'tutorials' | 'theme'>(
-        'tenants',
-    );
+    const [activeMenu, setActiveMenu] = useState<
+        'tenants' | 'tutorials' | 'theme' | 'billing'
+    >('tenants');
     const [selectedTheme, setSelectedTheme] = useState<string>(currentTheme);
     const [themeLevelFilter, setThemeLevelFilter] = useState<string>('ALL');
     const [savingTheme, setSavingTheme] = useState(false);
+
+    const billingForm = useForm({
+        whatsapp: billingSettings?.whatsapp ?? '6281234567890',
+        bank_name: billingSettings?.bank_name ?? 'Bank BCA',
+        account_number: billingSettings?.account_number ?? '1234567890',
+        account_name: billingSettings?.account_name ?? 'PT Sekolah Digital Indonesia',
+        email: billingSettings?.email ?? 'admin@central.local',
+    });
 
     // Central Video Tutorial modal states
     const [tutorialModalOpen, setTutorialModalOpen] = useState(false);
@@ -543,6 +560,13 @@ export default function CentralDashboard({
         );
     };
 
+    const handleBillingSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        billingForm.post('/admin/billing-settings', {
+            preserveScroll: true,
+        });
+    };
+
     const themeLevels = useMemo(() => {
         const levels = Array.from(new Set(themes.map((t) => t.level)));
         return ['ALL', ...levels];
@@ -806,6 +830,21 @@ export default function CentralDashboard({
                             <Palette className="h-4 w-4" />
                             Tema Landing Page
                         </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setActiveMenu('billing');
+                                setMobileSidebarOpen(false);
+                            }}
+                            className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
+                                activeMenu === 'billing'
+                                    ? 'border border-[var(--brand-primary,#FF6B35)]/30 bg-[var(--brand-primary-light,#FFF0EB)] font-black text-[var(--brand-primary,#FF6B35)] shadow-2xs dark:border-[var(--brand-primary,#FF6B35)]/40 dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:text-white'
+                                    : 'font-bold text-gray-600 hover:bg-gray-100 hover:text-[var(--brand-primary,#FF6B35)] dark:text-gray-300 dark:hover:bg-[#2D234A]/60 dark:hover:text-white'
+                            }`}
+                        >
+                            <CreditCard className="h-4 w-4" />
+                            Billing & Kontak
+                        </button>
                         <Link
                             href="/"
                             className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-gray-600 transition-colors hover:bg-gray-100 hover:text-[var(--brand-primary,#FF6B35)] dark:text-gray-300 dark:hover:bg-[#2D234A]/60 dark:hover:text-white"
@@ -1060,6 +1099,194 @@ export default function CentralDashboard({
                                             ))}
                                         </div>
                                     )}
+                                </CardContent>
+                            </Card>
+                        </div>
+                    ) : activeMenu === 'billing' ? (
+                        <div className="space-y-6">
+                            <Card className="rounded-2xl border-[#E8E8E8] bg-white/90 shadow-xs dark:border-[#2D234A] dark:bg-[#18122B]/90">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-lg font-black">
+                                        <CreditCard className="h-5 w-5 text-[var(--brand-primary,#FF6B35)]" />
+                                        Pengaturan Rekening, WhatsApp & Email Admin
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Informasi ini akan tampil pada popup
+                                        peringatan lisensi H-30 hari maupun
+                                        halaman pembayaran saat lisensi tenan
+                                        berakhir.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <form
+                                        onSubmit={handleBillingSubmit}
+                                        className="max-w-2xl space-y-4"
+                                    >
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor="cb-bank">
+                                                    Nama Bank
+                                                </Label>
+                                                <Input
+                                                    id="cb-bank"
+                                                    placeholder="Contoh: Bank BRI / Bank BCA"
+                                                    value={
+                                                        billingForm.data
+                                                            .bank_name
+                                                    }
+                                                    onChange={(e) =>
+                                                        billingForm.setData(
+                                                            'bank_name',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    required
+                                                />
+                                                {billingForm.errors
+                                                    .bank_name && (
+                                                    <p className="text-xs text-rose-500">
+                                                        {
+                                                            billingForm.errors
+                                                                .bank_name
+                                                        }
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor="cb-account">
+                                                    Nomor Rekening
+                                                </Label>
+                                                <Input
+                                                    id="cb-account"
+                                                    placeholder="1234567890"
+                                                    value={
+                                                        billingForm.data
+                                                            .account_number
+                                                    }
+                                                    onChange={(e) =>
+                                                        billingForm.setData(
+                                                            'account_number',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    required
+                                                />
+                                                {billingForm.errors
+                                                    .account_number && (
+                                                    <p className="text-xs text-rose-500">
+                                                        {
+                                                            billingForm.errors
+                                                                .account_number
+                                                        }
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-1.5 sm:col-span-2">
+                                                <Label htmlFor="cb-owner">
+                                                    Atas Nama Rekening
+                                                </Label>
+                                                <Input
+                                                    id="cb-owner"
+                                                    placeholder="Nama pemilik rekening"
+                                                    value={
+                                                        billingForm.data
+                                                            .account_name
+                                                    }
+                                                    onChange={(e) =>
+                                                        billingForm.setData(
+                                                            'account_name',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    required
+                                                />
+                                                {billingForm.errors
+                                                    .account_name && (
+                                                    <p className="text-xs text-rose-500">
+                                                        {
+                                                            billingForm.errors
+                                                                .account_name
+                                                        }
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor="cb-wa">
+                                                    Nomor HP / WhatsApp Admin
+                                                </Label>
+                                                <Input
+                                                    id="cb-wa"
+                                                    placeholder="6281234567890"
+                                                    value={
+                                                        billingForm.data.whatsapp
+                                                    }
+                                                    onChange={(e) =>
+                                                        billingForm.setData(
+                                                            'whatsapp',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    required
+                                                />
+                                                {billingForm.errors
+                                                    .whatsapp && (
+                                                    <p className="text-xs text-rose-500">
+                                                        {
+                                                            billingForm.errors
+                                                                .whatsapp
+                                                        }
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor="cb-email">
+                                                    Email Admin Central
+                                                </Label>
+                                                <Input
+                                                    id="cb-email"
+                                                    type="email"
+                                                    placeholder="admin@central.local"
+                                                    value={
+                                                        billingForm.data.email
+                                                    }
+                                                    onChange={(e) =>
+                                                        billingForm.setData(
+                                                            'email',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    required
+                                                />
+                                                {billingForm.errors.email && (
+                                                    <p className="text-xs text-rose-500">
+                                                        {
+                                                            billingForm.errors
+                                                                .email
+                                                        }
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-2">
+                                            <Button
+                                                type="submit"
+                                                variant="primary"
+                                                disabled={
+                                                    billingForm.processing
+                                                }
+                                                className="rounded-xl font-bold shadow-brand"
+                                            >
+                                                {billingForm.processing
+                                                    ? 'Menyimpan...'
+                                                    : 'Simpan Pengaturan Billing'}
+                                            </Button>
+                                        </div>
+                                    </form>
                                 </CardContent>
                             </Card>
                         </div>
