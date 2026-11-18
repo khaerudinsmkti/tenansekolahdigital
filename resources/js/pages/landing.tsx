@@ -635,7 +635,11 @@ const FAQS = [
 ];
 
 export default function Landing({ themes = [], demoUrl }: LandingProps) {
-    const { auth, school } = usePage<{ auth: AuthProp; school?: SchoolProp }>().props;
+    const { auth, school, isCentral } = usePage<{
+        auth: AuthProp;
+        school?: SchoolProp;
+        isCentral?: boolean;
+    }>().props;
     const schoolName = school?.name || 'SekolahDigital';
 
     const availableThemes = themes.length > 0 ? themes : DEFAULT_THEMES;
@@ -1567,47 +1571,53 @@ export default function Landing({ themes = [], demoUrl }: LandingProps) {
 
             {/* Footer */}
             <footer className="hidden md:block border-t border-gray-200/80 bg-white/80 py-8 text-center text-xs text-gray-500 dark:border-[#2D234A] dark:bg-[#18122B]/80 dark:text-gray-400">
-                <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 sm:flex-row sm:px-6 lg:px-12">
+                <div
+                    className={`mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 sm:flex-row sm:px-6 lg:px-12 ${
+                        isCentral ? 'justify-center' : 'justify-between'
+                    }`}
+                >
                     <p className="font-bold">
                         &copy; {new Date().getFullYear()} {schoolName}. Platform Manajemen & Website
                         Sekolah Digital.
                     </p>
-                    <div className="flex flex-wrap items-center justify-center gap-4 font-bold">
-                        {demoUrl ? (
+                    {!isCentral && (
+                        <div className="flex flex-wrap items-center justify-center gap-4 font-bold">
+                            {demoUrl ? (
+                                <a
+                                    href={demoUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="hover:text-[var(--brand-primary,#FF6B35)]"
+                                >
+                                    Portal Sekolah
+                                </a>
+                            ) : (
+                                <Link href="/portal" className="hover:text-[var(--brand-primary,#FF6B35)]">
+                                    Portal Sekolah
+                                </Link>
+                            )}
+                            <Link href="/profil" className="hover:text-[var(--brand-primary,#FF6B35)]">
+                                Profil
+                            </Link>
+                            <Link href="/berita" className="hover:text-[var(--brand-primary,#FF6B35)]">
+                                Berita
+                            </Link>
+                            <Link href="/galeri" className="hover:text-[var(--brand-primary,#FF6B35)]">
+                                Galeri
+                            </Link>
                             <a
-                                href={demoUrl}
+                                href={buildWhatsAppUrl(
+                                    school?.whatsapp,
+                                    `Halo Admin, saya ingin menghubungi tim ${schoolName}.`,
+                                )}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="hover:text-[var(--brand-primary,#FF6B35)]"
                             >
-                                Portal Sekolah
+                                Kontak
                             </a>
-                        ) : (
-                            <Link href="/portal" className="hover:text-[var(--brand-primary,#FF6B35)]">
-                                Portal Sekolah
-                            </Link>
-                        )}
-                        <Link href="/profil" className="hover:text-[var(--brand-primary,#FF6B35)]">
-                            Profil
-                        </Link>
-                        <Link href="/berita" className="hover:text-[var(--brand-primary,#FF6B35)]">
-                            Berita
-                        </Link>
-                        <Link href="/galeri" className="hover:text-[var(--brand-primary,#FF6B35)]">
-                            Galeri
-                        </Link>
-                        <a
-                            href={buildWhatsAppUrl(
-                                school?.whatsapp,
-                                `Halo Admin, saya ingin menghubungi tim ${schoolName}.`,
-                            )}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="hover:text-[var(--brand-primary,#FF6B35)]"
-                        >
-                            Kontak
-                        </a>
-                    </div>
+                        </div>
+                    )}
                 </div>
             </footer>
 
