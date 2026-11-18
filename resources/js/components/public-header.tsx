@@ -240,9 +240,9 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
         <>
             {/* Top Navigation Bar Header */}
             <header
-                className={`sticky top-0 z-30 border-b px-4 backdrop-blur-md transition-all duration-300 sm:px-6 lg:px-12 ${
+                className={`sticky top-0 z-30 border-b px-4 backdrop-blur-xl transition-all duration-300 sm:px-6 lg:px-12 ${
                     isScrolled
-                        ? 'border-white/20 bg-gradient-to-r from-[var(--brand-primary,#FF6B35)] to-[var(--brand-primary-dark,#E55A25)] text-white shadow-lg shadow-[var(--brand-primary,#FF6B35)]/25'
+                        ? 'border-[var(--brand-primary,#FF6B35)]/20 bg-gradient-to-r from-[var(--brand-primary-light,#FFF0EB)]/95 via-white/95 to-[#E6FAF8]/95 shadow-lg shadow-[var(--brand-primary,#FF6B35)]/10 dark:border-[#3D2E5C] dark:from-[#251A38]/95 dark:via-[#18122B]/95 dark:to-[#132A30]/95 dark:shadow-black/30'
                         : 'border-[#E8E8E8] bg-white/85 dark:border-[#2D234A] dark:bg-[#18122B]/85'
                 }`}
             >
@@ -257,24 +257,12 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
                                     className="size-11 sm:size-11 shrink-0 object-contain rounded-xl bg-white p-1 shadow-md border border-[#E8E8E8] dark:border-[#2D234A]"
                                 />
                             ) : (
-                                <div
-                                    className={`flex size-11 sm:size-11 shrink-0 items-center justify-center rounded-xl transition-all ${
-                                        isScrolled
-                                            ? 'bg-white/20 text-white ring-1 ring-white/30'
-                                            : 'bg-gradient-to-tr from-[var(--brand-primary,#FF6B35)] to-[var(--brand-primary-dark,#FF8C5A)] text-white shadow-brand'
-                                    }`}
-                                >
+                                <div className="flex size-11 sm:size-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-[var(--brand-primary,#FF6B35)] to-[var(--brand-primary-dark,#FF8C5A)] text-white shadow-brand">
                                     <AppLogoIcon className="size-6 text-white" />
                                 </div>
                             )}
                             <div className="min-w-0">
-                                <span
-                                    className={`text-base sm:text-lg lg:text-xl font-black tracking-tight leading-tight transition-colors line-clamp-1 ${
-                                        isScrolled
-                                            ? 'text-white'
-                                            : 'text-gray-900 dark:text-white group-hover:text-[var(--brand-primary,#FF6B35)]'
-                                    }`}
-                                >
+                                <span className="text-base sm:text-lg lg:text-xl font-black tracking-tight text-gray-900 dark:text-white leading-tight group-hover:text-[var(--brand-primary,#FF6B35)] transition-colors line-clamp-1">
                                     {schoolName}
                                 </span>
                             </div>
@@ -299,11 +287,9 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
                                         className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
                                             item.isActive
                                                 ? isScrolled
-                                                    ? 'bg-white font-black text-[var(--brand-primary,#FF6B35)] shadow-sm'
+                                                    ? 'bg-[var(--brand-primary,#FF6B35)] font-black text-white shadow-sm'
                                                     : 'border border-[var(--brand-primary,#FF6B35)]/30 bg-[var(--brand-primary-light,#FFF0EB)] font-black text-[var(--brand-primary,#FF6B35)] shadow-2xs dark:border-[var(--brand-primary,#FF6B35)]/40 dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:text-white'
-                                                : isScrolled
-                                                  ? 'text-white/90 hover:bg-white/15 hover:text-white'
-                                                  : 'text-gray-700 hover:bg-gray-100 hover:text-[var(--brand-primary,#FF6B35)] dark:text-gray-200 dark:hover:bg-gray-800'
+                                                : 'text-gray-700 hover:bg-white/70 hover:text-[var(--brand-primary,#FF6B35)] dark:text-gray-200 dark:hover:bg-white/10'
                                         }`}
                                     >
                                         <item.icon className="size-3.5" />
@@ -364,11 +350,9 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
                                     className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
                                         item.isActive
                                             ? isScrolled
-                                                ? 'bg-white font-black text-[var(--brand-primary,#FF6B35)] shadow-sm'
+                                                ? 'bg-[var(--brand-primary,#FF6B35)] font-black text-white shadow-sm'
                                                 : 'border border-[var(--brand-primary,#FF6B35)]/30 bg-[var(--brand-primary-light,#FFF0EB)] font-black text-[var(--brand-primary,#FF6B35)] shadow-2xs dark:border-[var(--brand-primary,#FF6B35)]/40 dark:bg-[var(--brand-primary,#FF6B35)]/20 dark:text-white'
-                                            : isScrolled
-                                              ? 'text-white/90 hover:bg-white/15 hover:text-white'
-                                              : 'text-gray-700 hover:bg-gray-100 hover:text-[var(--brand-primary,#FF6B35)] dark:text-gray-200 dark:hover:bg-gray-800'
+                                            : 'text-gray-700 hover:bg-white/70 hover:text-[var(--brand-primary,#FF6B35)] dark:text-gray-200 dark:hover:bg-white/10'
                                     }`}
                                 >
                                     <item.icon className="size-3.5" />
@@ -396,13 +380,9 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
                         {isCentral ? (
                             <Button
                                 asChild
-                                variant={isScrolled ? 'outline' : 'primary'}
+                                variant="primary"
                                 size="sm"
-                                className={`rounded-xl px-3 py-1.5 text-xs font-bold shadow-xs ${
-                                    isScrolled
-                                        ? 'border-white/40 bg-white text-[var(--brand-primary,#FF6B35)] hover:bg-white/90'
-                                        : ''
-                                }`}
+                                className="rounded-xl px-3 py-1.5 text-xs font-bold shadow-xs"
                             >
                                 <Link
                                     href={
@@ -422,13 +402,9 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
                         ) : auth.user ? (
                             <Button
                                 asChild
-                                variant={isScrolled ? 'outline' : 'primary'}
+                                variant="primary"
                                 size="sm"
-                                className={`rounded-xl px-3 py-1.5 text-xs font-bold shadow-xs ${
-                                    isScrolled
-                                        ? 'border-white/40 bg-white text-[var(--brand-primary,#FF6B35)] hover:bg-white/90'
-                                        : ''
-                                }`}
+                                className="rounded-xl px-3 py-1.5 text-xs font-bold shadow-xs"
                             >
                                 <Link href={auth.user?.role === 'publisher' ? '/news-management' : dashboard()}>
                                     <span>{auth.user?.role === 'publisher' ? 'Kelola' : 'Dashboard'}</span>
@@ -438,13 +414,9 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
                         ) : (
                             <Button
                                 asChild
-                                variant={isScrolled ? 'outline' : 'primary'}
+                                variant="primary"
                                 size="sm"
-                                className={`rounded-xl px-3 py-1.5 text-xs font-bold shadow-xs ${
-                                    isScrolled
-                                        ? 'border-white/40 bg-white text-[var(--brand-primary,#FF6B35)] hover:bg-white/90'
-                                        : ''
-                                }`}
+                                className="rounded-xl px-3 py-1.5 text-xs font-bold shadow-xs"
                             >
                                 <Link href={login()}>Masuk</Link>
                             </Button>
