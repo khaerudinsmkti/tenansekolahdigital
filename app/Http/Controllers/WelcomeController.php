@@ -21,8 +21,16 @@ class WelcomeController extends Controller
      */
     public function landing(): Response
     {
+        $appUrl = (string) config('app.url', 'http://localhost');
+        $parsed = parse_url($appUrl);
+        $scheme = $parsed['scheme'] ?? 'http';
+        $host = $parsed['host'] ?? 'localhost';
+        $port = isset($parsed['port']) ? ':'.$parsed['port'] : '';
+        $demoUrl = "{$scheme}://demo.{$host}{$port}";
+
         return Inertia::render('landing', [
             'themes' => array_values(ThemeService::getThemes()),
+            'demoUrl' => $demoUrl,
         ]);
     }
 

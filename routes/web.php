@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Central\CentralAdminController;
 use App\Http\Controllers\Central\CentralAuthController;
 use App\Http\Controllers\Central\CentralTutorialController;
 use App\Http\Controllers\Central\TenantController;
@@ -40,6 +41,10 @@ foreach (config('tenancy.central_domains', []) as $domain) {
 
             Route::post('/theme', [TenantController::class, 'updateTheme'])->name('central.theme.update');
             Route::post('/billing-settings', [TenantController::class, 'updateBillingSettings'])->name('central.billing.update');
+
+            Route::post('/central-admins', [CentralAdminController::class, 'store'])->name('central.admins.store');
+            Route::put('/central-admins/{adminId}', [CentralAdminController::class, 'update'])->name('central.admins.update');
+            Route::delete('/central-admins/{adminId}', [CentralAdminController::class, 'destroy'])->name('central.admins.destroy');
             Route::post('/branding-settings', [TenantController::class, 'updateBrandingSettings'])->name('central.branding.update');
 
             Route::post('/tutorials', [CentralTutorialController::class, 'store'])->name('central.tutorials.store');

@@ -87,6 +87,8 @@ class TenantController extends Controller
             'currentTheme' => CentralSettingService::getThemeColor(),
             'billingSettings' => CentralSettingService::getBillingSettings(),
             'brandingSettings' => CentralSettingService::getBrandingSettings(),
+            'centralAdmins' => CentralSettingService::getPublicAdminAccounts(),
+            'currentCentralAdminId' => $request->session()->get('central_admin_id'),
             'tutorials' => CentralTutorial::query()->orderBy('order')->latest('id')->get(),
             'tutorialRoles' => Tutorial::getAvailableRoles(),
         ]);

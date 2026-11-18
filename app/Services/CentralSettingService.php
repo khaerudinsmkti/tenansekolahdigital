@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+
 class CentralSettingService
 {
     private static function filePath(): string
@@ -125,7 +128,7 @@ class CentralSettingService
         return [
             'name' => (string) ($data['app_name'] ?? config('app.name', 'SekolahDigital')),
             'logo_path' => $logoPath,
-            'logo_url' => $logoPath ? '/storage/' . ltrim($logoPath, '/') : null,
+            'logo_url' => $logoPath ? '/storage/'.ltrim($logoPath, '/') : null,
         ];
     }
 
@@ -135,5 +138,137 @@ class CentralSettingService
         $data['app_name'] = $name;
         $data['logo_path'] = $logoPath;
         self::writeAll($data);
+    }
+
+    /**
+     * @return array<int, array{
+     *     id: string,
+     *     name: string,
+     *     email: string,
+     *     password_hash: string,
+     *     created_at: string
+     * }>
+     */
+    public static function getAdminAccounts(): array
+    {
+        $data = self::readAll();
+        $admins = $data['central_admins'] ?? null;
+
+        if (! is_array($admins) || count($admins) === 0) {
+            $defaultAdmin = [
+                'id' => (string) Str::uuid(),
+                'name' => 'Administrator Central',
+                'email' => strtolower(trim((string) env('CENTRAL_ADMIN_EMAIL', 'admin@central.local'))),
+                'password_hash' => Hash::make((string) env('CENTRAL_ADMIN_PASSWORD', 'admin12345')),
+                'created_at' => now()->toIso8601String(),
+            ];
+
+            $data['central_admins'] = [$defaultAdmin];
+            self::writeAll($data);
+
+            return [$defaultAdmin];
+        }
+
+        return array_values($admins);
+    }
+
+    /**
+     * @return array<int, array{
+     *     id: string,
+     *     name: string,
+     *     email: string,
+     *     created_at: string
+     * }>
+     */
+    public static function getPublicAdminAccounts(): array
+    {
+        return array_map(static fn (array $admin): array => [
+            'id' => $admin['id'],
+            'name' => $admin['name'],
+            'email' => $admin['email'],
+            'created_at' => $admin['created_at'] ?? '',
+        ], self::getAdminAccounts());
+    }
+
+    /**
+     * @return array{id: string, name: string, email: string, password_hash: string, created_at: string}|null
+     */
+    public static function findAdminByEmail(string $email): ?array
+    {
+        $target = strtolower(trim($email));
+
+        foreach (self::getAdminAccounts() as $admin) {
+            if (strtolower(trim($admin['email'])) === $target) {
+                return $admin;
+            }
+        }
+
+        return null;
+    }
+
+    public static function createAdminAccount(string $name, string $email, string $password): void
+    {
+        $admins = self::getAdminAccounts();
+        $admins[] = [
+            'id' => (string) Str::uuid(),
+            'name' => trim($name),
+            'email' => strtolower(trim($email)),
+            'password_hash' => Hash::make($password),
+            'created_at' => now()->toIso8601String(),
+        ];
+
+        $data = self::readAll();
+        $data['central_admins'] = $admins;
+        self::writeAll($data);
+    }
+
+    public static function updateAdminAccount(string $id, string $name, string $email, ?string $password = null): bool
+    {
+        $admins = self::getAdminAccounts();
+        $updated = false;
+
+        foreach ($admins as &$admin) {
+            if ($admin['id'] === $id) {
+                $admin['name'] = trim($name);
+                $admin['email'] = strtolower(trim($email));
+                if ($password !== null && $password !== '') {
+                    $admin['password_hash'] = Hash::make($password);
+                }
+                $updated = true;
+                break;
+            }
+        }
+        unset($admin);
+
+        if ($updated) {
+            $data = self::readAll();
+            $data['central_admins'] = $admins;
+            self::writeAll($data);
+        }
+
+        return $updated;
+    }
+
+    public static function deleteAdminAccount(string $id): bool
+    {
+        $admins = self::getAdminAccounts();
+        if (count($admins) <= 1) {
+            return false;
+        }
+
+        $filtered = array_values(array_filter(
+            $admins,
+            static fn (array $admin): bool => $admin['id'] !== $id
+        ));
+
+        if (count($filtered) === count($admins)) {
+            return false;
+        }
+
+        $data = self::readAll();
+        $data['central_admins'] = $filtered;
+        self::writeAll($data);
+
+        return true;
     }
 }

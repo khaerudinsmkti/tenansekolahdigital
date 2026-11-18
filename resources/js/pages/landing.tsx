@@ -75,6 +75,7 @@ interface AuthProp {
 
 interface LandingProps {
     themes?: ThemeOption[];
+    demoUrl?: string;
 }
 
 interface FeatureItem {
@@ -633,7 +634,7 @@ const FAQS = [
     },
 ];
 
-export default function Landing({ themes = [] }: LandingProps) {
+export default function Landing({ themes = [], demoUrl }: LandingProps) {
     const { auth, school } = usePage<{ auth: AuthProp; school?: SchoolProp }>().props;
     const schoolName = school?.name || 'SekolahDigital';
 
@@ -724,11 +725,23 @@ export default function Landing({ themes = [] }: LandingProps) {
                                     size="lg"
                                     className="h-12 rounded-2xl border-2 border-gray-200 bg-white/80 px-5 text-sm font-extrabold text-gray-800 hover:border-[var(--brand-primary,#FF6B35)]/50 hover:bg-[var(--brand-primary-light,#FFF0EB)] hover:text-[var(--brand-primary,#FF6B35)] dark:border-[#2D234A] dark:bg-[#18122B] dark:text-white"
                                 >
-                                    <Link href="/portal">
-                                        <School className="mr-2 size-4" />
-                                        Lihat Portal Sekolah
-                                        <ArrowRight className="ml-1.5 size-4" />
-                                    </Link>
+                                    {demoUrl ? (
+                                        <a
+                                            href={demoUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            <School className="mr-2 size-4" />
+                                            Lihat Portal Sekolah
+                                            <ArrowRight className="ml-1.5 size-4" />
+                                        </a>
+                                    ) : (
+                                        <Link href="/portal">
+                                            <School className="mr-2 size-4" />
+                                            Lihat Portal Sekolah
+                                            <ArrowRight className="ml-1.5 size-4" />
+                                        </Link>
+                                    )}
                                 </Button>
 
                                 <Button
@@ -940,10 +953,21 @@ export default function Landing({ themes = [] }: LandingProps) {
                                 size="sm"
                                 className="shrink-0 rounded-xl border-2 border-[var(--brand-primary,#FF6B35)]/40 text-xs font-extrabold text-[var(--brand-primary,#FF6B35)] hover:bg-[var(--brand-primary-light,#FFF0EB)]"
                             >
-                                <Link href="/portal">
-                                    Coba Portal Sekolah Sekarang
-                                    <ArrowRight className="ml-1.5 size-3.5" />
-                                </Link>
+                                {demoUrl ? (
+                                    <a
+                                        href={demoUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
+                                        Coba Portal Sekolah Sekarang
+                                        <ArrowRight className="ml-1.5 size-3.5" />
+                                    </a>
+                                ) : (
+                                    <Link href="/portal">
+                                        Coba Portal Sekolah Sekarang
+                                        <ArrowRight className="ml-1.5 size-3.5" />
+                                    </Link>
+                                )}
                             </Button>
                         )}
                     </div>
@@ -1259,10 +1283,21 @@ export default function Landing({ themes = [] }: LandingProps) {
                                 size="lg"
                                 className="h-12 rounded-2xl font-black shadow-brand"
                             >
-                                <Link href="/portal">
-                                    <School className="mr-2 size-4" />
-                                    Lihat Demo Portal Sekolah
-                                </Link>
+                                {demoUrl ? (
+                                    <a
+                                        href={demoUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
+                                        <School className="mr-2 size-4" />
+                                        Lihat Demo Portal Sekolah
+                                    </a>
+                                ) : (
+                                    <Link href="/portal">
+                                        <School className="mr-2 size-4" />
+                                        Lihat Demo Portal Sekolah
+                                    </Link>
+                                )}
                             </Button>
                             <Button
                                 asChild
@@ -1270,10 +1305,17 @@ export default function Landing({ themes = [] }: LandingProps) {
                                 size="lg"
                                 className="h-12 rounded-2xl border-white/25 bg-white/10 font-bold text-white hover:bg-white/20"
                             >
-                                <Link href="/kontak">
+                                <a
+                                    href={buildWhatsAppUrl(
+                                        school?.whatsapp,
+                                        `Halo Admin, saya ingin bertanya dan memesan aplikasi ${schoolName}. Mohon info lebih lanjut.`,
+                                    )}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
                                     <MessageSquare className="mr-2 size-4" />
                                     Tanya & Pesan Aplikasi
-                                </Link>
+                                </a>
                             </Button>
                         </div>
                     </div>
@@ -1484,10 +1526,17 @@ export default function Landing({ themes = [] }: LandingProps) {
                                 size="lg"
                                 className="h-12 rounded-2xl bg-white px-7 text-sm font-black text-gray-900 shadow-lg hover:bg-gray-100"
                             >
-                                <Link href="/kontak">
+                                <a
+                                    href={buildWhatsAppUrl(
+                                        school?.whatsapp,
+                                        `Halo Admin, saya tertarik untuk memesan aplikasi ${schoolName}. Mohon info lebih lanjut.`,
+                                    )}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
                                     <PhoneCall className="mr-2 size-4" />
                                     Hubungi & Pesan Sekarang
-                                </Link>
+                                </a>
                             </Button>
                             <Button
                                 asChild
@@ -1495,10 +1544,21 @@ export default function Landing({ themes = [] }: LandingProps) {
                                 variant="outline"
                                 className="h-12 rounded-2xl border-white/40 bg-white/15 px-6 text-sm font-extrabold text-white backdrop-blur-xs hover:bg-white/25"
                             >
-                                <Link href="/portal">
-                                    <School className="mr-2 size-4" />
-                                    Lihat Portal Sekolah
-                                </Link>
+                                {demoUrl ? (
+                                    <a
+                                        href={demoUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
+                                        <School className="mr-2 size-4" />
+                                        Lihat Portal Sekolah
+                                    </a>
+                                ) : (
+                                    <Link href="/portal">
+                                        <School className="mr-2 size-4" />
+                                        Lihat Portal Sekolah
+                                    </Link>
+                                )}
                             </Button>
                         </div>
                     </div>
@@ -1513,9 +1573,20 @@ export default function Landing({ themes = [] }: LandingProps) {
                         Sekolah Digital.
                     </p>
                     <div className="flex flex-wrap items-center justify-center gap-4 font-bold">
-                        <Link href="/portal" className="hover:text-[var(--brand-primary,#FF6B35)]">
-                            Portal Sekolah
-                        </Link>
+                        {demoUrl ? (
+                            <a
+                                href={demoUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="hover:text-[var(--brand-primary,#FF6B35)]"
+                            >
+                                Portal Sekolah
+                            </a>
+                        ) : (
+                            <Link href="/portal" className="hover:text-[var(--brand-primary,#FF6B35)]">
+                                Portal Sekolah
+                            </Link>
+                        )}
                         <Link href="/profil" className="hover:text-[var(--brand-primary,#FF6B35)]">
                             Profil
                         </Link>
@@ -1525,9 +1596,17 @@ export default function Landing({ themes = [] }: LandingProps) {
                         <Link href="/galeri" className="hover:text-[var(--brand-primary,#FF6B35)]">
                             Galeri
                         </Link>
-                        <Link href="/kontak" className="hover:text-[var(--brand-primary,#FF6B35)]">
+                        <a
+                            href={buildWhatsAppUrl(
+                                school?.whatsapp,
+                                `Halo Admin, saya ingin menghubungi tim ${schoolName}.`,
+                            )}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="hover:text-[var(--brand-primary,#FF6B35)]"
+                        >
                             Kontak
-                        </Link>
+                        </a>
                     </div>
                 </div>
             </footer>

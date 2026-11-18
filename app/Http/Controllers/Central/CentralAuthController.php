@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Central;
 
 use App\Http\Controllers\Controller;
+use App\Services\CentralSettingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -63,13 +65,9 @@ class CentralAuthController extends Controller
             ])->onlyInput('email');
         }
 
-        $expectedEmail = (string) env('CENTRAL_ADMIN_EMAIL', 'admin@central.local');
-        $expectedPassword = (string) env('CENTRAL_ADMIN_PASSWORD', 'admin12345');
+        $admin = CentralSettingService::findAdminByEmail($credentials['email']);
 
-        $emailMatches = hash_equals(strtolower($expectedEmail), strtolower(trim($credentials['email'])));
-        $passwordMatches = hash_equals($expectedPassword, $credentials['password']);
-
-        if (! $emailMatches || ! $passwordMatches) {
+        if ($admin === null || ! Hash::check($credentials['password'], $admin['password_hash'])) {
             RateLimiter::hit($throttleKey, 60);
 
             return back()->withErrors([
@@ -81,14 +79,21 @@ class CentralAuthController extends Controller
 
         $request->session()->regenerate();
         $request->session()->put('central_admin_authenticated', true);
-        $request->session()->put('central_admin_email', $expectedEmail);
+        $request->session()->put('central_admin_id', $admin['id']);
+        $request->session()->put('central_admin_name', $admin['name']);
+        $request->session()->put('central_admin_email', $admin['email']);
 
         return redirect()->intended(route('central.dashboard'));
     }
 
     public function logout(Request $request): RedirectResponse
     {
-        $request->session()->forget(['central_admin_authenticated', 'central_admin_email']);
+        $request->session()->forget([
+            'central_admin_authenticated',
+            'central_admin_id',
+            'central_admin_name',
+            'central_admin_email',
+        ]);
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

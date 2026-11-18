@@ -40,9 +40,12 @@ class HandleInertiaRequests extends Middleware
         $isDutyToday = $user ? $user->isDutyTeacherToday() : false;
         $school = $isTenant ? \App\Models\SchoolSetting::getSetting() : null;
         $centralBranding = ! $isTenant ? \App\Services\CentralSettingService::getBrandingSettings() : null;
+        $centralBilling = ! $isTenant ? \App\Services\CentralSettingService::getBillingSettings() : null;
         $centralSchool = ! $isTenant ? [
             'name' => $centralBranding['name'],
             'logo_url' => $centralBranding['logo_url'],
+            'whatsapp' => $centralBilling['whatsapp'] ?? null,
+            'email' => $centralBilling['email'] ?? null,
             'theme_color' => \App\Services\CentralSettingService::getThemeColor(),
             'theme_data' => \App\Services\CentralSettingService::getThemeData(),
         ] : null;

@@ -121,6 +121,13 @@ interface TutorialRoleOption {
     color: string;
 }
 
+interface CentralAdminItem {
+    id: string;
+    name: string;
+    email: string;
+    created_at: string;
+}
+
 interface CentralDashboardProps {
     tenants: TenantItem[];
     stats: {
@@ -150,6 +157,8 @@ interface CentralDashboardProps {
         logo_path: string | null;
         logo_url: string | null;
     };
+    centralAdmins: CentralAdminItem[];
+    currentCentralAdminId?: string | null;
     tutorials: CentralTutorialItem[];
     tutorialRoles: Record<string, TutorialRoleOption>;
 }
@@ -172,6 +181,8 @@ export default function CentralDashboard({
     currentTheme = 'sd-orange',
     billingSettings,
     brandingSettings,
+    centralAdmins = [],
+    currentCentralAdminId = null,
     tutorials = [],
     tutorialRoles = {},
 }: CentralDashboardProps) {
@@ -188,8 +199,64 @@ export default function CentralDashboard({
     );
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const [activeMenu, setActiveMenu] = useState<
-        'tenants' | 'tutorials' | 'branding' | 'theme' | 'billing'
+        'tenants' | 'tutorials' | 'branding' | 'theme' | 'billing' | 'admins'
     >('tenants');
+
+    // Central Admin Accounts modal states
+    const [adminModalOpen, setAdminModalOpen] = useState(false);
+    const [editingCentralAdmin, setEditingCentralAdmin] =
+        useState<CentralAdminItem | null>(null);
+    const centralAdminForm = useForm<{
+        name: string;
+        email: string;
+        password: string;
+    }>({
+        name: '',
+        email: '',
+        password: '',
+    });
+
+    const openCreateCentralAdminModal = () => {
+        setEditingCentralAdmin(null);
+        centralAdminForm.setData({ name: '', email: '', password: '' });
+        centralAdminForm.clearErrors();
+        setAdminModalOpen(true);
+    };
+
+    const openEditCentralAdminModal = (admin: CentralAdminItem) => {
+        setEditingCentralAdmin(admin);
+        centralAdminForm.setData({
+            name: admin.name,
+            email: admin.email,
+            password: '',
+        });
+        centralAdminForm.clearErrors();
+        setAdminModalOpen(true);
+    };
+
+    const handleCentralAdminSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (editingCentralAdmin) {
+            centralAdminForm.put(
+                `/admin/central-admins/${editingCentralAdmin.id}`,
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        setAdminModalOpen(false);
+                        setEditingCentralAdmin(null);
+                    },
+                },
+            );
+        } else {
+            centralAdminForm.post('/admin/central-admins', {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setAdminModalOpen(false);
+                    centralAdminForm.reset();
+                },
+            });
+        }
+    };
     const [selectedTheme, setSelectedTheme] = useState<string>(currentTheme);
     const [themeLevelFilter, setThemeLevelFilter] = useState<string>('ALL');
     const [savingTheme, setSavingTheme] = useState(false);
@@ -971,6 +1038,28 @@ export default function CentralDashboard({
                                 />
                                 <span>Billing & Kontak</span>
                             </button>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setActiveMenu('admins');
+                                    setMobileSidebarOpen(false);
+                                }}
+                                className={`group relative flex w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-[13px] transition-all duration-200 ${
+                                    activeMenu === 'admins'
+                                        ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF8A5B] font-bold text-white shadow-md shadow-[#FF6B35]/25'
+                                        : 'font-semibold text-gray-600 hover:bg-gray-100/80 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.06] dark:hover:text-white'
+                                }`}
+                            >
+                                <ShieldCheck
+                                    className={`h-4 w-4 transition-transform duration-200 group-hover:scale-105 ${
+                                        activeMenu === 'admins'
+                                            ? 'text-white'
+                                            : 'text-gray-400 group-hover:text-[#FF6B35] dark:text-gray-400'
+                                    }`}
+                                />
+                                <span>Akun Admin Central</span>
+                            </button>
                         </div>
 
                         <div className="space-y-1">
@@ -1636,6 +1725,102 @@ export default function CentralDashboard({
                                             </div>
                                         </div>
                                     </form>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    ) : activeMenu === 'admins' ? (
+                        <div className="space-y-6">
+                            <Card className="rounded-2xl border-[#E8E8E8] bg-white/90 shadow-xs dark:border-[#2D234A] dark:bg-[#18122B]/90">
+                                <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <CardTitle className="flex items-center gap-2 text-lg font-black">
+                                            <ShieldCheck className="h-5 w-5 text-[var(--brand-primary,#FF6B35)]" />
+                                            Manajemen Akun Login Admin Central
+                                        </CardTitle>
+                                        <CardDescription className="mt-1">
+                                            Kelola akun yang dapat masuk ke
+                                            halaman Admin Central (/admin/login).
+                                        </CardDescription>
+                                    </div>
+                                    <Button
+                                        variant="primary"
+                                        size="sm"
+                                        onClick={openCreateCentralAdminModal}
+                                        className="shrink-0 rounded-xl font-bold shadow-brand"
+                                    >
+                                        <UserPlus className="mr-1.5 h-4 w-4" />
+                                        Tambah Admin Central
+                                    </Button>
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                    {centralAdmins.map((admin) => {
+                                        const isCurrentSession =
+                                            currentCentralAdminId === admin.id;
+                                        return (
+                                            <div
+                                                key={admin.id}
+                                                className="flex flex-col gap-3 rounded-2xl border border-[#E8E8E8] bg-white p-4 sm:flex-row sm:items-center sm:justify-between dark:border-[#2D234A] dark:bg-[#130E24]"
+                                            >
+                                                <div className="min-w-0 space-y-1">
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <span className="text-sm font-bold text-gray-900 dark:text-white">
+                                                            {admin.name}
+                                                        </span>
+                                                        {isCurrentSession && (
+                                                            <Badge className="bg-[#FFF0EB] text-[10px] font-bold text-[#FF6B35] dark:bg-[#331C1A] dark:text-[#FF8C5A]">
+                                                                Sedang Login
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                        {admin.email}
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex shrink-0 items-center gap-1.5">
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            openEditCentralAdminModal(
+                                                                admin,
+                                                            )
+                                                        }
+                                                    >
+                                                        <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                                                        Edit / Password
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-rose-500 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40 dark:hover:bg-rose-950/50"
+                                                        title={
+                                                            isCurrentSession
+                                                                ? 'Tidak bisa menghapus akun yang sedang login'
+                                                                : 'Hapus akun admin'
+                                                        }
+                                                        disabled={
+                                                            isCurrentSession ||
+                                                            centralAdmins.length <=
+                                                                1
+                                                        }
+                                                        onClick={() =>
+                                                            router.delete(
+                                                                `/admin/central-admins/${admin.id}`,
+                                                                {
+                                                                    preserveScroll: true,
+                                                                },
+                                                            )
+                                                        }
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </CardContent>
                             </Card>
                         </div>
@@ -2565,6 +2750,129 @@ export default function CentralDashboard({
                             {deleting ? 'Menghapus...' : 'Hapus Permanen'}
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal: Tambah / Edit Akun Admin Central */}
+            <Dialog
+                open={adminModalOpen}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setAdminModalOpen(false);
+                        setEditingCentralAdmin(null);
+                    }
+                }}
+            >
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <ShieldCheck className="h-5 w-5 text-[var(--brand-primary,#FF6B35)]" />
+                            {editingCentralAdmin
+                                ? 'Edit Akun Admin Central'
+                                : 'Tambah Akun Admin Central'}
+                        </DialogTitle>
+                        <DialogDescription>
+                            Akun ini digunakan untuk login ke panel Central
+                            Tenancy Hub.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <form
+                        onSubmit={handleCentralAdminSubmit}
+                        className="space-y-4"
+                    >
+                        <div className="space-y-1.5">
+                            <Label htmlFor="ca-name">Nama Admin</Label>
+                            <Input
+                                id="ca-name"
+                                placeholder="Nama lengkap"
+                                value={centralAdminForm.data.name}
+                                onChange={(e) =>
+                                    centralAdminForm.setData(
+                                        'name',
+                                        e.target.value,
+                                    )
+                                }
+                                required
+                            />
+                            {centralAdminForm.errors.name && (
+                                <p className="text-xs text-rose-500">
+                                    {centralAdminForm.errors.name}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label htmlFor="ca-email">Email Login</Label>
+                            <Input
+                                id="ca-email"
+                                type="email"
+                                placeholder="admin@central.local"
+                                value={centralAdminForm.data.email}
+                                onChange={(e) =>
+                                    centralAdminForm.setData(
+                                        'email',
+                                        e.target.value,
+                                    )
+                                }
+                                required
+                            />
+                            {centralAdminForm.errors.email && (
+                                <p className="text-xs text-rose-500">
+                                    {centralAdminForm.errors.email}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label htmlFor="ca-password">
+                                Kata Sandi{' '}
+                                {editingCentralAdmin
+                                    ? '(Kosongkan jika tetap)'
+                                    : '(Min. 8 karakter)'}
+                            </Label>
+                            <Input
+                                id="ca-password"
+                                type="password"
+                                placeholder="••••••••"
+                                value={centralAdminForm.data.password}
+                                onChange={(e) =>
+                                    centralAdminForm.setData(
+                                        'password',
+                                        e.target.value,
+                                    )
+                                }
+                                required={!editingCentralAdmin}
+                            />
+                            {centralAdminForm.errors.password && (
+                                <p className="text-xs text-rose-500">
+                                    {centralAdminForm.errors.password}
+                                </p>
+                            )}
+                        </div>
+
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => setAdminModalOpen(false)}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                disabled={centralAdminForm.processing}
+                                className="rounded-xl font-bold shadow-brand"
+                            >
+                                {centralAdminForm.processing
+                                    ? 'Menyimpan...'
+                                    : editingCentralAdmin
+                                      ? 'Simpan Perubahan'
+                                      : 'Tambah Admin'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
                 </DialogContent>
             </Dialog>
 
