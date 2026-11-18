@@ -97,6 +97,27 @@ class TenantDatabaseBackupService
         return unlink($path);
     }
 
+    public static function pruneBackups(Tenant $tenant, int $keep): int
+    {
+        if ($keep < 1) {
+            return 0;
+        }
+
+        $backups = self::listBackups($tenant);
+        if (count($backups) <= $keep) {
+            return 0;
+        }
+
+        $deleted = 0;
+        foreach (array_slice($backups, $keep) as $old) {
+            if (self::deleteBackup($tenant, $old['filename'])) {
+                $deleted++;
+            }
+        }
+
+        return $deleted;
+    }
+
     public static function exportSql(Tenant $tenant): string
     {
         return $tenant->run(function () use ($tenant): string {

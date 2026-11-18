@@ -167,6 +167,14 @@ interface CentralDashboardProps {
         logo_path: string | null;
         logo_url: string | null;
     };
+    autoBackupSettings: {
+        enabled: boolean;
+        frequency: 'daily' | 'weekly' | 'monthly';
+        time: string;
+        retention: number;
+        last_run_at: string | null;
+        last_summary: string | null;
+    };
     centralAdmins: CentralAdminItem[];
     currentCentralAdminId?: string | null;
     tutorials: CentralTutorialItem[];
@@ -191,6 +199,7 @@ export default function CentralDashboard({
     currentTheme = 'sd-orange',
     billingSettings,
     brandingSettings,
+    autoBackupSettings,
     centralAdmins = [],
     currentCentralAdminId = null,
     tutorials = [],
@@ -209,8 +218,46 @@ export default function CentralDashboard({
     );
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const [activeMenu, setActiveMenu] = useState<
-        'tenants' | 'tutorials' | 'branding' | 'theme' | 'billing' | 'admins'
+        | 'tenants'
+        | 'tutorials'
+        | 'branding'
+        | 'theme'
+        | 'billing'
+        | 'admins'
+        | 'autobackup'
     >('tenants');
+
+    const [runningAllBackups, setRunningAllBackups] = useState(false);
+    const autoBackupForm = useForm<{
+        enabled: boolean;
+        frequency: 'daily' | 'weekly' | 'monthly';
+        time: string;
+        retention: number;
+    }>({
+        enabled: autoBackupSettings?.enabled ?? false,
+        frequency: autoBackupSettings?.frequency ?? 'daily',
+        time: autoBackupSettings?.time ?? '02:00',
+        retention: autoBackupSettings?.retention ?? 7,
+    });
+
+    const handleAutoBackupSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        autoBackupForm.post('/admin/auto-backup/settings', {
+            preserveScroll: true,
+        });
+    };
+
+    const handleRunAllBackupsNow = () => {
+        setRunningAllBackups(true);
+        router.post(
+            '/admin/auto-backup/run-now',
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setRunningAllBackups(false),
+            },
+        );
+    };
 
     // Central Admin Accounts modal states
     const [adminModalOpen, setAdminModalOpen] = useState(false);
@@ -1242,6 +1289,28 @@ export default function CentralDashboard({
                                 />
                                 <span>Akun Admin Central</span>
                             </button>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setActiveMenu('autobackup');
+                                    setMobileSidebarOpen(false);
+                                }}
+                                className={`group relative flex w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-[13px] transition-all duration-200 ${
+                                    activeMenu === 'autobackup'
+                                        ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF8A5B] font-bold text-white shadow-md shadow-[#FF6B35]/25'
+                                        : 'font-semibold text-gray-600 hover:bg-gray-100/80 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.06] dark:hover:text-white'
+                                }`}
+                            >
+                                <HardDrive
+                                    className={`h-4 w-4 transition-transform duration-200 group-hover:scale-105 ${
+                                        activeMenu === 'autobackup'
+                                            ? 'text-white'
+                                            : 'text-gray-400 group-hover:text-[#FF6B35] dark:text-gray-400'
+                                    }`}
+                                />
+                                <span>Backup Otomatis</span>
+                            </button>
                         </div>
 
                         <div className="space-y-1">
@@ -2003,6 +2072,229 @@ export default function CentralDashboard({
                                             </div>
                                         );
                                     })}
+                                </CardContent>
+                            </Card>
+                        </div>
+                    ) : activeMenu === 'autobackup' ? (
+                        <div className="space-y-6">
+                            <Card className="rounded-2xl border-[#E8E8E8] bg-white/90 shadow-xs dark:border-[#2D234A] dark:bg-[#18122B]/90">
+                                <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <CardTitle className="flex items-center gap-2 text-lg font-black">
+                                            <HardDrive className="h-5 w-5 text-[var(--brand-primary,#FF6B35)]" />
+                                            Backup Otomatis Seluruh Tenan
+                                        </CardTitle>
+                                        <CardDescription className="mt-1">
+                                            Jadwalkan backup database otomatis
+                                            harian, mingguan, atau bulanan untuk
+                                            semua sekolah sekaligus tanpa klik
+                                            satu per satu.
+                                        </CardDescription>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="primary"
+                                        size="sm"
+                                        disabled={
+                                            runningAllBackups ||
+                                            tenants.length === 0
+                                        }
+                                        onClick={handleRunAllBackupsNow}
+                                        className="shrink-0 rounded-xl font-bold shadow-brand"
+                                    >
+                                        <Database
+                                            className={`mr-1.5 h-4 w-4 ${runningAllBackups ? 'animate-pulse' : ''}`}
+                                        />
+                                        {runningAllBackups
+                                            ? 'Membackup Semua...'
+                                            : 'Backup Semua Tenan Sekarang'}
+                                    </Button>
+                                </CardHeader>
+
+                                <CardContent className="space-y-6">
+                                    {autoBackupSettings?.last_run_at && (
+                                        <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-xs dark:border-emerald-900 dark:bg-emerald-950/30">
+                                            <div className="font-semibold text-emerald-800 dark:text-emerald-200">
+                                                Backup Massal Terakhir:{' '}
+                                                <span className="font-black">
+                                                    {autoBackupSettings.last_summary}
+                                                </span>
+                                            </div>
+                                            <div className="text-[11px] text-emerald-700 dark:text-emerald-300">
+                                                {new Date(
+                                                    autoBackupSettings.last_run_at,
+                                                ).toLocaleString('id-ID')}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <form
+                                        onSubmit={handleAutoBackupSubmit}
+                                        className="max-w-2xl space-y-5"
+                                    >
+                                        <label className="flex cursor-pointer items-center justify-between rounded-2xl border border-[#E8E8E8] bg-[#FFFBF7] p-4 dark:border-[#2D234A] dark:bg-[#130E24]">
+                                            <div>
+                                                <div className="text-sm font-black text-gray-900 dark:text-white">
+                                                    Aktifkan Jadwal Backup
+                                                    Otomatis
+                                                </div>
+                                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                    Menjalankan backup semua
+                                                    database tenan sesuai jadwal
+                                                    berikut
+                                                </div>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                checked={
+                                                    autoBackupForm.data.enabled
+                                                }
+                                                onChange={(e) =>
+                                                    autoBackupForm.setData(
+                                                        'enabled',
+                                                        e.target.checked,
+                                                    )
+                                                }
+                                                className="h-5 w-5 rounded border-gray-300 accent-[#FF6B35]"
+                                            />
+                                        </label>
+
+                                        <div className="space-y-2">
+                                            <Label>Frekuensi Jadwal</Label>
+                                            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+                                                {(
+                                                    [
+                                                        {
+                                                            key: 'daily',
+                                                            title: 'Harian',
+                                                            desc: 'Setiap hari pada jam terpilih',
+                                                        },
+                                                        {
+                                                            key: 'weekly',
+                                                            title: 'Mingguan',
+                                                            desc: 'Setiap hari Minggu',
+                                                        },
+                                                        {
+                                                            key: 'monthly',
+                                                            title: 'Bulanan',
+                                                            desc: 'Setiap tanggal 1 tiap bulan',
+                                                        },
+                                                    ] as const
+                                                ).map((opt) => (
+                                                    <button
+                                                        key={opt.key}
+                                                        type="button"
+                                                        onClick={() =>
+                                                            autoBackupForm.setData(
+                                                                'frequency',
+                                                                opt.key,
+                                                            )
+                                                        }
+                                                        className={`rounded-2xl border-2 p-3.5 text-left transition-all ${
+                                                            autoBackupForm.data
+                                                                .frequency ===
+                                                            opt.key
+                                                                ? 'border-[var(--brand-primary,#FF6B35)] bg-[var(--brand-primary-light,#FFF0EB)]/70 dark:bg-[var(--brand-primary,#FF6B35)]/15'
+                                                                : 'border-[#E8E8E8] hover:border-gray-300 dark:border-[#2D234A]'
+                                                        }`}
+                                                    >
+                                                        <div className="text-xs font-black text-gray-900 dark:text-white">
+                                                            {opt.title}
+                                                        </div>
+                                                        <div className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400">
+                                                            {opt.desc}
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor="ab-time">
+                                                    Jam Eksekusi (WIB)
+                                                </Label>
+                                                <Input
+                                                    id="ab-time"
+                                                    type="time"
+                                                    value={
+                                                        autoBackupForm.data.time
+                                                    }
+                                                    onChange={(e) =>
+                                                        autoBackupForm.setData(
+                                                            'time',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    required
+                                                />
+                                                {autoBackupForm.errors.time && (
+                                                    <p className="text-xs text-rose-500">
+                                                        {
+                                                            autoBackupForm
+                                                                .errors.time
+                                                        }
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor="ab-retention">
+                                                    Simpan Maksimal Backup /
+                                                    Tenan
+                                                </Label>
+                                                <Input
+                                                    id="ab-retention"
+                                                    type="number"
+                                                    min={1}
+                                                    max={90}
+                                                    value={
+                                                        autoBackupForm.data
+                                                            .retention
+                                                    }
+                                                    onChange={(e) =>
+                                                        autoBackupForm.setData(
+                                                            'retention',
+                                                            Number(
+                                                                e.target.value,
+                                                            ) || 1,
+                                                        )
+                                                    }
+                                                    required
+                                                />
+                                                <p className="text-[11px] text-gray-500">
+                                                    File backup lama di atas
+                                                    batas ini otomatis dihapus.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="rounded-2xl border border-[#E8E8E8] bg-gray-50 p-3.5 text-xs text-gray-600 dark:border-[#2D234A] dark:bg-[#130E24] dark:text-gray-300">
+                                            <div className="font-bold text-gray-800 dark:text-white">
+                                                Catatan Cron Job Hosting:
+                                            </div>
+                                            <div className="mt-1">
+                                                Pastikan cron job server
+                                                menjalankan scheduler Laravel
+                                                setiap menit:
+                                            </div>
+                                            <code className="mt-1.5 block rounded-lg bg-white px-2.5 py-1.5 font-mono text-[11px] text-gray-800 dark:bg-[#18122B] dark:text-gray-200">
+                                                * * * * * php artisan schedule:run
+                                                &gt;&gt; /dev/null 2&gt;&amp;1
+                                            </code>
+                                        </div>
+
+                                        <Button
+                                            type="submit"
+                                            variant="primary"
+                                            disabled={autoBackupForm.processing}
+                                            className="rounded-xl font-bold shadow-brand"
+                                        >
+                                            {autoBackupForm.processing
+                                                ? 'Menyimpan...'
+                                                : 'Simpan Jadwal Backup Otomatis'}
+                                        </Button>
+                                    </form>
                                 </CardContent>
                             </Card>
                         </div>

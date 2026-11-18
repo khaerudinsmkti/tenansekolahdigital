@@ -6,9 +6,13 @@ namespace App\Http\Controllers\Central;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
+use App\Services\CentralSettingService;
 use App\Services\TenantDatabaseBackupService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class TenantBackupController extends Controller
@@ -119,5 +123,36 @@ class TenantBackupController extends Controller
         return response()->json([
             'message' => "Backup {$filename} berhasil dihapus.",
         ]);
+    }
+
+    public function updateAutoBackupSettings(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'enabled' => ['required', 'boolean'],
+            'frequency' => ['required', Rule::in(['daily', 'weekly', 'monthly'])],
+            'time' => ['required', 'regex:/^([01]\d|2[0-3]):[0-5]\d$/'],
+            'retention' => ['required', 'integer', 'min:1', 'max:90'],
+        ], [
+            'time.regex' => 'Format jam harus HH:MM (contoh: 02:00).',
+        ]);
+
+        CentralSettingService::setAutoBackupSettings([
+            'enabled' => (bool) $validated['enabled'],
+            'frequency' => (string) $validated['frequency'],
+            'time' => (string) $validated['time'],
+            'retention' => (int) $validated['retention'],
+        ]);
+
+        return back()->with('success', 'Pengaturan backup otomatis seluruh tenan berhasil disimpan.');
+    }
+
+    public function runAllNow(): RedirectResponse
+    {
+        Artisan::call('tenants:backup');
+
+        $settings = CentralSettingService::getAutoBackupSettings();
+        $summary = $settings['last_summary'] ?: 'Backup seluruh tenan selesai dijalankan.';
+
+        return back()->with('success', "Backup massal selesai: {$summary}");
     }
 }

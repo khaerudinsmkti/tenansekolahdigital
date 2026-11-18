@@ -4,7 +4,9 @@ namespace App\Console\Commands;
 
 use App\Models\AcademicHoliday;
 use App\Models\SchoolSetting;
+use App\Models\Tenant;
 use App\Models\User;
+use App\Services\TenantLicenseService;
 use App\Services\WebPushService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -30,13 +32,45 @@ class SendAttendanceRemindersCommand extends Command
      */
     public function handle(): int
     {
-        $setting = SchoolSetting::getSetting();
         $isForced = (bool) $this->option('force');
+        $tenants = Tenant::all();
+
+        if ($tenants->isEmpty()) {
+            $this->info('Belum ada tenan yang terdaftar.');
+            return self::SUCCESS;
+        }
+
+        $totalNotified = 0;
+
+        foreach ($tenants as $tenant) {
+            $license = TenantLicenseService::getStatus($tenant);
+            if (! $license['is_usable'] && ! $isForced) {
+                $this->line("[{$tenant->id}] Dilewati karena lisensi tidak aktif ({$license['status']}).");
+                continue;
+            }
+
+            try {
+                $sent = $tenant->run(fn (): int => $this->processTenant($tenant->id, $isForced));
+                $totalNotified += $sent;
+            } catch (\Throwable $e) {
+                report($e);
+                $this->error("[{$tenant->id}] Gagal memproses pengingat: {$e->getMessage()}");
+            }
+        }
+
+        $this->info("Selesai seluruh tenan. Total {$totalNotified} notifikasi push berhasil dikirimkan.");
+
+        return self::SUCCESS;
+    }
+
+    private function processTenant(string $tenantId, bool $isForced): int
+    {
+        $setting = SchoolSetting::getSetting();
 
         // 1. Cek apakah fitur pengingat PWA diaktifkan
         if (! $setting->pwa_reminder_enabled && ! $isForced) {
-            $this->info('Fitur pengingat presensi PWA sedang dinonaktifkan di Pengaturan Sekolah.');
-            return self::SUCCESS;
+            $this->info("[{$tenantId}] Fitur pengingat presensi PWA sedang dinonaktifkan.");
+            return 0;
         }
 
         $now = Carbon::now();
@@ -46,8 +80,8 @@ class SendAttendanceRemindersCommand extends Command
         if (! $isForced) {
             $holiday = AcademicHoliday::getOffDay($today);
             if ($holiday) {
-                $this->info("Hari ini adalah hari libur sekolah: {$holiday->name}. Pengingat presensi tidak dikirimkan.");
-                return self::SUCCESS;
+                $this->info("[{$tenantId}] Hari libur sekolah: {$holiday->name}.");
+                return 0;
             }
         }
 
@@ -58,8 +92,8 @@ class SendAttendanceRemindersCommand extends Command
 
             $currentHm = $now->format('H:i');
             if ($currentHm < $startTime || $currentHm > $endTime) {
-                $this->info("Saat ini ({$currentHm}) di luar jam operasional pengingat ({$startTime} s.d {$endTime}).");
-                return self::SUCCESS;
+                $this->info("[{$tenantId}] Di luar jam operasional pengingat ({$startTime} s.d {$endTime}).");
+                return 0;
             }
         }
 
@@ -67,11 +101,11 @@ class SendAttendanceRemindersCommand extends Command
         $teachers = User::where('role', 'teacher')->get();
 
         if ($teachers->isEmpty()) {
-            $this->info('Tidak ada pengguna dengan peran guru yang terdaftar.');
-            return self::SUCCESS;
+            $this->info("[{$tenantId}] Tidak ada pengguna dengan peran guru.");
+            return 0;
         }
 
-        $this->info("Memeriksa status absensi untuk {$teachers->count()} guru...");
+        $this->info("[{$tenantId}] Memeriksa status absensi untuk {$teachers->count()} guru...");
 
         $notifiedCount = 0;
         $title = $setting->pwa_reminder_title ?: 'Pengingat Presensi Siswa ⏰';
@@ -96,7 +130,7 @@ class SendAttendanceRemindersCommand extends Command
                 'body' => $body,
                 'icon' => $setting->logo_url ?: '/icons/icon-192x192.png',
                 'badge' => '/icons/icon-192x192.png',
-                'url' => route('attendances.index'),
+                'url' => '/attendances',
                 'tag' => 'attendance-reminder-' . $today,
                 'timestamp' => now()->timestamp * 1000,
             ];
@@ -105,14 +139,12 @@ class SendAttendanceRemindersCommand extends Command
 
             if (! empty($result['success']) && $result['sent_count'] > 0) {
                 $notifiedCount += $result['sent_count'];
-                $this->line("  ✓ Notifikasi terkirim ke {$teacher->name} ({$result['sent_count']} perangkat) - Kelas: {$classNames}");
+                $this->line("  ✓ [{$tenantId}] Notifikasi terkirim ke {$teacher->name} ({$result['sent_count']} perangkat) - Kelas: {$classNames}");
             } else {
-                $this->line("  - {$teacher->name} belum mengisi {$classNames}, namun belum mendaftarkan izin notifikasi di perangkatnya.");
+                $this->line("  - [{$tenantId}] {$teacher->name} belum mengisi {$classNames}, namun belum mengaktifkan notifikasi.");
             }
         }
 
-        $this->info("Selesai. Total {$notifiedCount} notifikasi push berhasil dikirimkan ke perangkat guru.");
-
-        return self::SUCCESS;
+        return $notifiedCount;
     }
 }

@@ -271,4 +271,58 @@ class CentralSettingService
 
         return true;
     }
+
+    /**
+     * @return array{
+     *     enabled: bool,
+     *     frequency: 'daily'|'weekly'|'monthly',
+     *     time: string,
+     *     retention: int,
+     *     last_run_at: string|null,
+     *     last_summary: string|null
+     * }
+     */
+    public static function getAutoBackupSettings(): array
+    {
+        $data = self::readAll();
+        $freq = (string) ($data['auto_backup_frequency'] ?? 'daily');
+        if (! in_array($freq, ['daily', 'weekly', 'monthly'], true)) {
+            $freq = 'daily';
+        }
+
+        return [
+            'enabled' => (bool) ($data['auto_backup_enabled'] ?? false),
+            'frequency' => $freq,
+            'time' => (string) ($data['auto_backup_time'] ?? '02:00'),
+            'retention' => max(1, (int) ($data['auto_backup_retention'] ?? 7)),
+            'last_run_at' => is_string($data['auto_backup_last_run_at'] ?? null) ? $data['auto_backup_last_run_at'] : null,
+            'last_summary' => is_string($data['auto_backup_last_summary'] ?? null) ? $data['auto_backup_last_summary'] : null,
+        ];
+    }
+
+    /**
+     * @param  array{
+     *     enabled: bool,
+     *     frequency: string,
+     *     time: string,
+     *     retention: int
+     * }  $settings
+     */
+    public static function setAutoBackupSettings(array $settings): void
+    {
+        $data = self::readAll();
+        $data['auto_backup_enabled'] = (bool) $settings['enabled'];
+        $data['auto_backup_frequency'] = $settings['frequency'];
+        $data['auto_backup_time'] = $settings['time'];
+        $data['auto_backup_retention'] = max(1, (int) $settings['retention']);
+        self::writeAll($data);
+    }
+
+    public static function recordAutoBackupRun(string $summary): void
+    {
+        $data = self::readAll();
+        $data['auto_backup_last_run_at'] = now()->toIso8601String();
+        $data['auto_backup_last_summary'] = $summary;
+        self::writeAll($data);
+    }
 }
