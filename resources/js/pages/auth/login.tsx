@@ -1,4 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
+import { useState } from 'react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
@@ -11,12 +12,34 @@ import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 import PasskeyVerify from '@/components/passkey-verify';
 
+type DemoAccount = {
+    role: string;
+    username: string;
+    password: string;
+    description: string;
+};
+
 type Props = {
     status?: string;
     canResetPassword: boolean;
+    isDemo?: boolean;
+    demoAccounts?: DemoAccount[];
 };
 
-export default function Login({ status, canResetPassword }: Props) {
+export default function Login({
+    status,
+    canResetPassword,
+    isDemo = false,
+    demoAccounts = [],
+}: Props) {
+    const [loginValue, setLoginValue] = useState('');
+    const [passwordValue, setPasswordValue] = useState('');
+
+    const fillDemoAccount = (account: DemoAccount) => {
+        setLoginValue(account.username);
+        setPasswordValue(account.password);
+    };
+
     return (
         <>
             <Head title="Masuk ke Sistem" />
@@ -39,17 +62,19 @@ export default function Login({ status, canResetPassword }: Props) {
                         <div className="grid gap-5">
                             <div className="grid gap-2">
                                 <Label htmlFor="email" className="font-semibold text-[#374151] dark:text-[#E8E8E8]">
-                                    NIP atau Email
+                                    NIP, Username, atau Email
                                 </Label>
                                 <Input
                                     id="email"
                                     type="text"
                                     name="email"
+                                    value={loginValue}
+                                    onChange={(e) => setLoginValue(e.target.value)}
                                     required
                                     autoFocus
                                     tabIndex={1}
                                     autoComplete="username"
-                                    placeholder="Masukkan NIP atau Email Anda"
+                                    placeholder="Masukkan NIP, Username, atau Email"
                                 />
                                 <InputError message={errors.email} />
                             </div>
@@ -72,6 +97,8 @@ export default function Login({ status, canResetPassword }: Props) {
                                 <PasswordInput
                                     id="password"
                                     name="password"
+                                    value={passwordValue}
+                                    onChange={(e) => setPasswordValue(e.target.value)}
                                     required
                                     tabIndex={2}
                                     autoComplete="current-password"
@@ -106,6 +133,60 @@ export default function Login({ status, canResetPassword }: Props) {
                     </>
                 )}
             </Form>
+
+            {isDemo && demoAccounts.length > 0 && (
+                <div className="mt-6 rounded-2xl border border-[#FF6B35]/25 bg-[#FFF7F3] p-4 dark:border-[#FF6B35]/30 dark:bg-[#1F1A17]">
+                    <div className="mb-3 flex items-center justify-between gap-2">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-[#FF6B35]">
+                                Akun Demo Tersedia
+                            </p>
+                            <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">
+                                Klik salah satu akun di bawah untuk mengisi form login secara otomatis.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {demoAccounts.map((account) => {
+                            const isSelected = loginValue === account.username;
+
+                            return (
+                                <button
+                                    key={account.username}
+                                    type="button"
+                                    onClick={() => fillDemoAccount(account)}
+                                    className={`flex flex-col items-start rounded-xl border p-2.5 text-left transition-all ${
+                                        isSelected
+                                            ? 'border-[#FF6B35] bg-white shadow-sm ring-1 ring-[#FF6B35]/30 dark:bg-[#2A221E]'
+                                            : 'border-[#E5E7EB] bg-white/80 hover:border-[#FF6B35]/50 hover:bg-white dark:border-[#374151] dark:bg-[#262626]/70 dark:hover:border-[#FF6B35]/50'
+                                    }`}
+                                >
+                                    <span className="text-xs font-bold text-[#111827] dark:text-[#F3F4F6]">
+                                        {account.role}
+                                    </span>
+                                    <span className="mt-0.5 text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">
+                                        {account.description}
+                                    </span>
+                                    <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-mono text-[#374151] dark:text-[#D1D5DB]">
+                                        <span>
+                                            User: <strong className="text-[#FF6B35]">{account.username}</strong>
+                                        </span>
+                                        <span>•</span>
+                                        <span>
+                                            Pass: <strong>{account.password}</strong>
+                                        </span>
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <p className="mt-3 text-center text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">
+                        Database demo direset otomatis ke kondisi awal setiap malam pukul 00:00 WIB.
+                    </p>
+                </div>
+            )}
         </>
     );
 }

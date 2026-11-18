@@ -29,3 +29,9 @@ if ($autoBackup['enabled']) {
         default => $backupEvent->dailyAt($autoBackup['time']),
     };
 }
+
+// Reset Otomatis Database Tenan Demo Setiap Malam Pukul 00:00
+Schedule::command('demo:reset')
+    ->dailyAt('00:00')
+    ->timezone(config('app.timezone', 'Asia/Jakarta'))
+    ->withoutOverlapping();

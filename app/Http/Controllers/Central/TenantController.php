@@ -284,6 +284,23 @@ class TenantController extends Controller
         return back()->with('success', 'Migrasi database untuk seluruh sekolah berhasil dijalankan.');
     }
 
+    public function resetDemo(Tenant $tenant): RedirectResponse
+    {
+        if ($tenant->id !== 'demo') {
+            return back()->with('error', 'Fitur reset manual hanya tersedia untuk tenan demo.');
+        }
+
+        $exitCode = Artisan::call('demo:reset', [
+            '--tenant' => $tenant->id,
+        ]);
+
+        if ($exitCode !== 0) {
+            return back()->with('error', "Gagal mereset database tenan demo [{$tenant->id}].");
+        }
+
+        return back()->with('success', "Database tenan demo [{$tenant->id}] berhasil direset ke kondisi default.");
+    }
+
     public function destroy(Tenant $tenant): RedirectResponse
     {
         $name = $tenant->name ?? $tenant->id;

@@ -238,7 +238,7 @@ class SchoolSetting extends Model
 
     public function getMissionAttribute($value): ?string
     {
-        return $value ?: "1. Menanamkan nilai keimanan, ketakwaan, dan budi pekerti luhur dalam kehidupan sehari-hari.\n2. Melaksanakan pembelajaran aktif, inovatif, kreatif, dan menyenangkan berbasis teknologi ramah anak.\n3. Mengembangkan potensi bakat, minat, dan kecerdasan majemuk peserta didik secara optimal melalui kegiatan intrakulikuler dan ekstrakurikuler.\n4. Mewujudkan lingkungan sekolah yang bersih, sehat, aman, inklusif, dan kondusif untuk bertumbuh kembang.\n5. Menjalin kemitraan yang harmonis dan transparan antara pihak sekolah, komite, orang tua murid, dan masyarakat sekitar.";
+        return $value ?: "1 Menanamkan nilai keimanan, ketakwaan, dan budi pekerti luhur dalam kehidupan sehari-hari.\n2 Melaksanakan pembelajaran aktif, inovatif, kreatif, dan menyenangkan berbasis teknologi ramah anak.\n3 Mengembangkan potensi bakat, minat, dan kecerdasan majemuk peserta didik secara optimal melalui kegiatan intrakulikuler dan ekstrakurikuler.\n4 Mewujudkan lingkungan sekolah yang bersih, sehat, aman, inklusif, dan kondusif untuk bertumbuh kembang.\n5 Menjalin kemitraan yang harmonis dan transparan antara pihak sekolah, komite, orang tua murid, dan masyarakat sekitar.";
     }
 
     public function getSchoolMottoAttribute($value): ?string

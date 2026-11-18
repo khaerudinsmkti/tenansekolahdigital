@@ -253,7 +253,7 @@ export default function SchoolProfileEdit({ profile, school_name }: SchoolProfil
     const missionItems = mission
         ? mission
               .split('\n')
-              .map((line) => line.replace(/^[\d+.-]\s*/, '').trim())
+              .map((line) => line.replace(/^(?:\d+[.)-]?|-)\s*/, '').trim())
               .filter((line) => line.length > 0)
         : [];
 

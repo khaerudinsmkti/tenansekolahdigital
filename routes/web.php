@@ -45,6 +45,7 @@ foreach (config('tenancy.central_domains', []) as $domain) {
 
             Route::post('/tenants/migrate-all', [TenantController::class, 'migrateAll'])->name('central.tenants.migrate-all');
             Route::post('/tenants/{tenant}/migrate', [TenantController::class, 'migrate'])->name('central.tenants.migrate');
+            Route::post('/tenants/{tenant}/reset-demo', [TenantController::class, 'resetDemo'])->name('central.tenants.reset-demo');
 
             Route::get('/tenants/{tenant}/backups', [TenantBackupController::class, 'index'])->name('central.tenants.backups.index');
             Route::post('/tenants/{tenant}/backups', [TenantBackupController::class, 'store'])->name('central.tenants.backups.store');

@@ -360,6 +360,8 @@ export default function CentralDashboard({
         is_active: true,
     });
 
+    const [resettingDemoId, setResettingDemoId] = useState<string | null>(null);
+
     // License modal states
     const [licenseTenant, setLicenseTenant] = useState<TenantItem | null>(null);
 
@@ -602,6 +604,26 @@ export default function CentralDashboard({
             {
                 preserveScroll: true,
                 onFinish: () => setMigratingAll(false),
+            },
+        );
+    };
+
+    const handleResetDemo = (tenantId: string) => {
+        if (
+            !window.confirm(
+                'Reset database tenan demo ke kondisi awal? Semua perubahan pada tenan demo akan dikembalikan ke data default.',
+            )
+        ) {
+            return;
+        }
+
+        setResettingDemoId(tenantId);
+        router.post(
+            `/admin/tenants/${tenantId}/reset-demo`,
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setResettingDemoId(null),
             },
         );
     };
@@ -2710,6 +2732,35 @@ export default function CentralDashboard({
                                                 />
                                                 Migrate
                                             </Button>
+                                            {tenant.id === 'demo' && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="border-amber-300 bg-amber-50/80 text-amber-800 hover:bg-amber-100 hover:text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/50"
+                                                    onClick={() =>
+                                                        handleResetDemo(
+                                                            tenant.id,
+                                                        )
+                                                    }
+                                                    disabled={
+                                                        resettingDemoId ===
+                                                        tenant.id
+                                                    }
+                                                >
+                                                    <RotateCcw
+                                                        className={`mr-1.5 h-3.5 w-3.5 ${
+                                                            resettingDemoId ===
+                                                            tenant.id
+                                                                ? 'animate-spin'
+                                                                : ''
+                                                        }`}
+                                                    />
+                                                    {resettingDemoId ===
+                                                    tenant.id
+                                                        ? 'Mereset...'
+                                                        : 'Reset Demo'}
+                                                </Button>
+                                            )}
                                             <Button
                                                 variant="outline"
                                                 size="sm"

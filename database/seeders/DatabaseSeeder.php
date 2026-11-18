@@ -6,13 +6,19 @@ use App\Models\Attendance;
 use App\Models\AttendanceAdjustment;
 use App\Models\Classroom;
 use App\Models\DutySchedule;
+use App\Models\ExtracurricularMember;
+use App\Models\Gallery;
 use App\Models\News;
 use App\Models\NewsCategory;
+use App\Models\SchoolSetting;
 use App\Models\Student;
+use App\Models\TeacherProfile;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
@@ -276,6 +282,32 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // 8b. Create Coach User (Pelatih Ekstrakurikuler)
+        $coach = User::firstOrCreate(
+            ['email' => 'pelatih@absensiku.com'],
+            [
+                'name' => 'Rizky Pratama, S.Or.',
+                'username' => 'pelatih',
+                'password' => Hash::make('password'),
+                'role' => 'coach',
+                'nip' => '199407122021011002',
+                'email_verified_at' => now(),
+            ]
+        );
+
+        foreach (Student::orderBy('id')->take(5)->get() as $memberStudent) {
+            ExtracurricularMember::firstOrCreate(
+                [
+                    'coach_id' => $coach->id,
+                    'student_id' => $memberStudent->id,
+                    'extracurricular_name' => 'Pramuka',
+                ],
+                [
+                    'notes' => 'Anggota aktif ekstrakurikuler Pramuka',
+                ]
+            );
+        }
+
         // 9. Create News Categories
         $catPengumuman = NewsCategory::firstOrCreate(
             ['name' => 'Pengumuman Resmi'],
@@ -294,7 +326,21 @@ class DatabaseSeeder extends Seeder
             ['slug' => 'ekstrakurikuler', 'color' => 'purple', 'description' => 'Informasi klub minat, bakat, pramuka, dan olahraga']
         );
 
-        // 10. Create Sample News
+        // 10. Copy Sample News Images to Tenant Public Storage & Create Sample News
+        $newsImages = [];
+        foreach ([1, 2, 3] as $index) {
+            $filename = "demo-news-{$index}.jpg";
+            $sourcePath = database_path("seeders/assets/news/{$filename}");
+            $storagePath = "news_images/{$filename}";
+
+            if (File::exists($sourcePath)) {
+                Storage::disk('public')->put($storagePath, File::get($sourcePath));
+                $newsImages[$index] = $storagePath;
+            } else {
+                $newsImages[$index] = null;
+            }
+        }
+
         News::firstOrCreate(
             ['slug' => 'edaran-pelaksanaan-penilaian-akhir-semester-pas-2026'],
             [
@@ -303,7 +349,8 @@ class DatabaseSeeder extends Seeder
                 'user_id' => $publisher->id,
                 'excerpt' => 'Informasi lengkap jadwal dan tata tertib Penilaian Akhir Semester (PAS) Gasal bagi seluruh siswa kelas I hingga VI.',
                 'content' => "<p>Yth. Bapak/Ibu Orang Tua / Wali Murid dan seluruh Siswa-Siswi,</p><p>Sehubungan dengan berakhirnya kegiatan pembelajaran semester gasal Tahun Ajaran 2026/2027, pihak sekolah akan menyelenggarakan <strong>Penilaian Akhir Semester (PAS) Gasal</strong> yang dimulai pada tanggal 10 Desember 2026.</p><p>Diharapkan seluruh siswa mempersiapkan diri dengan baik, menjaga kesehatan, dan datang tepat waktu sesuai jam yang ditentukan. Silakan unduh lampiran berkas jadwal resmi dan tata tertib ujian di bawah ini.</p>",
-                'image_path' => null,
+                'image_path' => $newsImages[1],
+                'images' => $newsImages[1] ? [$newsImages[1]] : null,
                 'attachment_path' => null,
                 'attachment_name' => null,
                 'is_published' => true,
@@ -320,7 +367,8 @@ class DatabaseSeeder extends Seeder
                 'user_id' => $publisher->id,
                 'excerpt' => 'Selamat kepada Ananda Naufal dan Tim yang berhasil mengharumkan nama sekolah di ajang Olimpiade Sains Kota.',
                 'content' => "<p>Kabar membanggakan kembali datang dari perwakilan siswa-siswi kita. Dalam ajang Olimpiade Sains & Matematika Tingkat Kota yang diselenggarakan akhir pekan lalu, perwakilan sekolah berhasil menyabet Juara 1 Kategori IPA Terapan dan Medali Perak Matematika.</p><p>Kepala Sekolah menyampaikan apresiasi setinggi-tingginya kepada para guru pembimbing dan orang tua yang senantiasa mendampingi proses belajar ananda. Semoga prestasi ini menjadi motivasi bagi seluruh murid untuk terus berkarya dan berprestasi.</p>",
-                'image_path' => null,
+                'image_path' => $newsImages[2],
+                'images' => $newsImages[2] ? [$newsImages[2]] : null,
                 'attachment_path' => null,
                 'attachment_name' => null,
                 'is_published' => true,
@@ -337,7 +385,8 @@ class DatabaseSeeder extends Seeder
                 'user_id' => $publisher->id,
                 'excerpt' => 'Semarak Jumat Sehat bersama tenaga medis Puskesmas setempat untuk membangun kebiasaan hidup sehat sejak dini.',
                 'content' => "<p>Jumat pagi di halaman utama sekolah berlangsung penuh keceriaan. Seluruh warga sekolah mulai dari kelas 1 sampai kelas 6, didampingi dewan guru, mengikuti kegiatan Senam Kesegaran Jasmani (SKJ) bersama.</p><p>Setelah senam, tim dari Puskesmas memberikan penyuluhan interaktif mengenai pentingnya sarapan bergizi seimbang, cara mencuci tangan dengan sabun yang benar, dan menjaga kebersihan lingkungan sekolah.</p>",
-                'image_path' => null,
+                'image_path' => $newsImages[3],
+                'images' => $newsImages[3] ? [$newsImages[3]] : null,
                 'attachment_path' => null,
                 'attachment_name' => null,
                 'is_published' => true,
@@ -345,5 +394,206 @@ class DatabaseSeeder extends Seeder
                 'views_count' => 97,
             ]
         );
+        // 11. Seed Default School Logo, Favicon & Principal Greeting Photo
+        $schoolSetting = SchoolSetting::getSetting();
+
+        $principalSource = database_path('seeders/assets/school/principal-greeting.jpg');
+        if (File::exists($principalSource)) {
+            $principalStoragePath = 'school/principal-greeting.jpg';
+            Storage::disk('public')->put($principalStoragePath, File::get($principalSource));
+            $schoolSetting->principal_photo_path = $principalStoragePath;
+        }
+
+        $logoSource = database_path('seeders/assets/school/school-logo.webp');
+        if (File::exists($logoSource)) {
+            $logoStoragePath = 'school/school-logo.webp';
+            Storage::disk('public')->put($logoStoragePath, File::get($logoSource));
+            $schoolSetting->logo_path = $logoStoragePath;
+        }
+
+        $schoolSetting->mission = "1 Menanamkan nilai keimanan, ketakwaan, dan budi pekerti luhur dalam kehidupan sehari-hari.\n2 Melaksanakan pembelajaran aktif, inovatif, kreatif, dan menyenangkan berbasis teknologi ramah anak.\n3 Mengembangkan potensi bakat, minat, dan kecerdasan majemuk peserta didik secara optimal melalui kegiatan intrakulikuler dan ekstrakurikuler.\n4 Mewujudkan lingkungan sekolah yang bersih, sehat, aman, inklusif, dan kondusif untuk bertumbuh kembang.\n5 Menjalin kemitraan yang harmonis dan transparan antara pihak sekolah, komite, orang tua murid, dan masyarakat sekitar.";
+        $schoolSetting->save();
+
+        // 12. Seed 3 Sample Activity Galleries with Photos
+        Gallery::ensureTableExists();
+
+        $sampleGalleries = [
+            [
+                'title' => 'Upacara Bendera & Penyerahan Piala Prestasi Siswa',
+                'category' => 'Upacara & Prestasi',
+                'description' => 'Dokumentasi pelaksanaan upacara bendera rutin hari Senin yang dirangkaikan dengan penyerahan piala kejuaraan Lomba PBB dan prestasi siswa.',
+                'activity_date' => now()->subDays(5)->toDateString(),
+                'files' => ['album-1-1.jpg', 'album-1-2.jpg', 'album-1-3.jpg', 'album-1-4.jpg'],
+            ],
+            [
+                'title' => 'Perkemahan, Pioneering & Api Unggun Pramuka',
+                'category' => 'Ekstrakurikuler',
+                'description' => 'Kegiatan perkemahan akhir pekan anggota Pramuka meliputi apel pembukaan, mendirikan tenda, latihan pioneering, dan malam api unggun.',
+                'activity_date' => now()->subDays(3)->toDateString(),
+                'files' => ['album-2-1.jpg', 'album-2-2.jpg', 'album-2-3.jpg', 'album-2-4.jpg', 'album-2-5.jpg', 'album-2-6.jpg'],
+            ],
+            [
+                'title' => 'Jumat Sehat, Sarapan Bersama & Pembinaan Karakter',
+                'category' => 'Kegiatan Sekolah',
+                'description' => 'Rangkaian program Jumat Sehat dan pembinaan siswa mulai dari senam pagi bersama, sarapan bergizi di kelas, hingga seminar motivasi di aula.',
+                'activity_date' => now()->subDay()->toDateString(),
+                'files' => ['album-3-1.jpg', 'album-3-2.jpg', 'album-3-3.jpg'],
+            ],
+        ];
+
+        foreach ($sampleGalleries as $item) {
+            $storedPaths = [];
+            $totalBytes = 0;
+
+            foreach ($item['files'] as $filename) {
+                $sourcePath = database_path("seeders/assets/gallery/{$filename}");
+                if (File::exists($sourcePath)) {
+                    $storagePath = "galleries/{$filename}";
+                    Storage::disk('public')->put($storagePath, File::get($sourcePath));
+                    $storedPaths[] = $storagePath;
+                    $totalBytes += File::size($sourcePath);
+                }
+            }
+
+            if (! empty($storedPaths)) {
+                Gallery::firstOrCreate(
+                    ['title' => $item['title']],
+                    [
+                        'category' => $item['category'],
+                        'description' => $item['description'],
+                        'activity_date' => $item['activity_date'],
+                        'image_path' => $storedPaths[0],
+                        'images' => $storedPaths,
+                        'file_size' => $totalBytes,
+                        'is_published' => true,
+                        'user_id' => $publisher->id,
+                    ]
+                );
+            }
+        }
+
+        // 13. Seed Teacher Profiles with Photos
+        TeacherProfile::ensureTableExists();
+
+        TeacherProfile::whereIn('user_id', [$teacher1->id, $teacher3->id])->delete();
+
+        $teacherProfilesData = [
+            [
+                'user_id' => $principal->id,
+                'name' => $principal->name,
+                'subject' => 'Kepala Sekolah',
+                'homeroom_class' => null,
+                'employment_status' => 'PNS',
+                'file' => 'teacher-1.jpg',
+                'sort_order' => 1,
+            ],
+            [
+                'user_id' => $teacher2->id,
+                'name' => $teacher2->name,
+                'subject' => 'Guru Kelas',
+                'homeroom_class' => 'Kelas 4-B',
+                'employment_status' => 'PNS',
+                'file' => 'teacher-2.jpg',
+                'sort_order' => 2,
+            ],
+            [
+                'user_id' => $teacher4->id,
+                'name' => $teacher4->name,
+                'subject' => 'Pendidikan Agama Islam',
+                'homeroom_class' => null,
+                'employment_status' => 'PPPK',
+                'file' => 'teacher-3.jpg',
+                'sort_order' => 3,
+            ],
+            [
+                'user_id' => null,
+                'name' => 'Hendra Wijaya, S.Pd.',
+                'subject' => 'Matematika',
+                'homeroom_class' => 'Kelas 5-A',
+                'employment_status' => 'PNS',
+                'file' => 'teacher-4.jpg',
+                'sort_order' => 4,
+            ],
+            [
+                'user_id' => null,
+                'name' => 'Dedi Kurniawan, M.Pd.',
+                'subject' => 'Ilmu Pengetahuan Alam',
+                'homeroom_class' => 'Kelas 6-A',
+                'employment_status' => 'PNS',
+                'file' => 'teacher-5.jpg',
+                'sort_order' => 5,
+            ],
+            [
+                'user_id' => null,
+                'name' => 'Fajar Nugroho, S.Pd.',
+                'subject' => 'Pendidikan Jasmani & Olahraga',
+                'homeroom_class' => null,
+                'employment_status' => 'PPPK',
+                'file' => 'teacher-6.jpg',
+                'sort_order' => 6,
+            ],
+            [
+                'user_id' => null,
+                'name' => 'Rudi Hartono, S.Kom.',
+                'subject' => 'Informatika & Koding',
+                'homeroom_class' => null,
+                'employment_status' => 'GTY',
+                'file' => 'teacher-7.jpg',
+                'sort_order' => 7,
+            ],
+            [
+                'user_id' => null,
+                'name' => 'Bagus Santoso, S.Pd.',
+                'subject' => 'Bahasa Indonesia',
+                'homeroom_class' => 'Kelas 5-B',
+                'employment_status' => 'PPPK',
+                'file' => 'teacher-8.jpg',
+                'sort_order' => 8,
+            ],
+            [
+                'user_id' => null,
+                'name' => 'Agung Saputra, S.Sn.',
+                'subject' => 'Seni Budaya & Prakarya',
+                'homeroom_class' => null,
+                'employment_status' => 'Honorer',
+                'file' => 'teacher-9.jpg',
+                'sort_order' => 9,
+            ],
+            [
+                'user_id' => null,
+                'name' => 'Dimas Pratama, S.Pd.',
+                'subject' => 'Bahasa Inggris',
+                'homeroom_class' => 'Kelas 6-B',
+                'employment_status' => 'PPPK',
+                'file' => 'teacher-10.jpg',
+                'sort_order' => 10,
+            ],
+        ];
+
+        foreach ($teacherProfilesData as $profileData) {
+            $sourcePath = database_path("seeders/assets/teachers/{$profileData['file']}");
+            $storagePath = null;
+            $fileSize = 0;
+
+            if (File::exists($sourcePath)) {
+                $storagePath = "teacher_profiles/{$profileData['file']}";
+                Storage::disk('public')->put($storagePath, File::get($sourcePath));
+                $fileSize = File::size($sourcePath);
+            }
+
+            TeacherProfile::updateOrCreate(
+                ['name' => $profileData['name']],
+                [
+                    'user_id' => $profileData['user_id'],
+                    'subject' => $profileData['subject'],
+                    'homeroom_class' => $profileData['homeroom_class'],
+                    'employment_status' => $profileData['employment_status'],
+                    'photo_path' => $storagePath,
+                    'file_size' => $fileSize,
+                    'sort_order' => $profileData['sort_order'],
+                    'is_active' => true,
+                ]
+            );
+        }
     }
 }

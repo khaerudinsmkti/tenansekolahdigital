@@ -70,11 +70,43 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureViews(): void
     {
-        Fortify::loginView(fn (Request $request) => Inertia::render('auth/login', [
-            'canResetPassword' => Features::enabled(Features::resetPasswords()),
-            'canRegister' => false,
-            'status' => $request->session()->get('status'),
-        ]));
+        Fortify::loginView(function (Request $request) {
+            $isDemo = (function_exists('tenancy') && tenancy()->initialized && tenant('id') === 'demo')
+                || str_starts_with(strtolower($request->getHost()), 'demo.');
+
+            return Inertia::render('auth/login', [
+                'canResetPassword' => Features::enabled(Features::resetPasswords()),
+                'canRegister' => false,
+                'status' => $request->session()->get('status'),
+                'isDemo' => $isDemo,
+                'demoAccounts' => $isDemo ? [
+                    [
+                        'role' => 'Kepala Sekolah',
+                        'username' => 'kepsek',
+                        'password' => 'password',
+                        'description' => 'Monitoring & persetujuan laporan',
+                    ],
+                    [
+                        'role' => 'Guru',
+                        'username' => 'nurul',
+                        'password' => 'password',
+                        'description' => 'Presensi & wali kelas 4-A',
+                    ],
+                    [
+                        'role' => 'Publisher',
+                        'username' => 'publisher',
+                        'password' => 'password',
+                        'description' => 'Kelola berita & galeri sekolah',
+                    ],
+                    [
+                        'role' => 'Pelatih Eskul',
+                        'username' => 'pelatih',
+                        'password' => 'password',
+                        'description' => 'Absensi & laporan ekstrakurikuler',
+                    ],
+                ] : [],
+            ]);
+        });
 
         Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/reset-password', [
             'email' => $request->email,

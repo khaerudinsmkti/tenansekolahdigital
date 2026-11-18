@@ -42,7 +42,7 @@ export function PublicFooter({ schoolName: propSchoolName, className }: PublicFo
                     &copy; {new Date().getFullYear()} {schoolName}. All rights reserved.
                 </div>
                 <div className="flex items-center gap-1.5 font-medium">
-                    <span>Develop by</span>
+                    <span>Developed by</span>
                     <a
                         href={getLandingUrl()}
                         title="Kunjungi Website Resmi Sekolah Digital"
