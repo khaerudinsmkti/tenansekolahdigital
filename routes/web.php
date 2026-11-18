@@ -10,6 +10,20 @@ use Illuminate\Support\Facades\Route;
 
 foreach (config('tenancy.central_domains', []) as $domain) {
     Route::domain($domain)->group(function () {
+        // Fallback penyajian file storage central (aman di hosting meski tanpa symlink storage:link)
+        Route::get('/storage/{path}', function (string $path) {
+            $cleanPath = ltrim(str_replace('..', '', $path), '/');
+            $fullPath = base_path('storage/app/public/'.$cleanPath);
+
+            if ($cleanPath === '' || ! is_file($fullPath)) {
+                abort(404);
+            }
+
+            return response()->file($fullPath, [
+                'Cache-Control' => 'public, max-age=86400',
+            ]);
+        })->where('path', '.*')->name('central.storage');
+
         // Landing Page Utama Central
         Route::get('/', [WelcomeController::class, 'landing'])->name('central.home');
 

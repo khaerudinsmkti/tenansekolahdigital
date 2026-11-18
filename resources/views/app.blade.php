@@ -34,9 +34,17 @@
         @php
             $isTenant = function_exists('tenancy') && tenancy()->initialized;
             $schoolSetting = $isTenant ? \App\Models\SchoolSetting::getSetting() : null;
-            $schoolLogoUrl = $schoolSetting?->logo_path ? '/storage/' . ltrim($schoolSetting->logo_path, '/') : null;
-            $appName = $schoolSetting?->name ?: config('app.name', 'AbsensiKu SD');
-            $pwaVersion = $schoolSetting?->updated_at ? $schoolSetting->updated_at->timestamp : (file_exists(public_path('manifest.json')) ? filemtime(public_path('manifest.json')) : time());
+            $centralBranding = ! $isTenant ? \App\Services\CentralSettingService::getBrandingSettings() : null;
+            $schoolLogoUrl = $isTenant
+                ? ($schoolSetting?->logo_path ? '/storage/' . ltrim($schoolSetting->logo_path, '/') : null)
+                : ($centralBranding['logo_url'] ?? null);
+            $appName = $isTenant
+                ? ($schoolSetting?->name ?: config('app.name', 'AbsensiKu SD'))
+                : ($centralBranding['name'] ?? config('app.name', 'SekolahDigital'));
+            $centralSettingsFile = base_path('storage/app/central-settings.json');
+            $pwaVersion = $isTenant
+                ? ($schoolSetting?->updated_at ? $schoolSetting->updated_at->timestamp : (file_exists(public_path('manifest.json')) ? filemtime(public_path('manifest.json')) : time()))
+                : (is_file($centralSettingsFile) ? filemtime($centralSettingsFile) : time());
             $themeColor = $isTenant ? ($schoolSetting?->theme_color ?? 'sd-orange') : \App\Services\CentralSettingService::getThemeColor();
             $themeData = \App\Services\ThemeService::getTheme($themeColor);
         @endphp
@@ -51,7 +59,7 @@
         @if($schoolLogoUrl)
             <link rel="icon" href="{{ $schoolLogoUrl }}?v={{ $pwaVersion }}">
             <link rel="shortcut icon" href="{{ $schoolLogoUrl }}?v={{ $pwaVersion }}">
-            <link rel="apple-touch-icon" href="/icons/icon-maskable-192x192.png?v={{ $pwaVersion }}">
+            <link rel="apple-touch-icon" href="{{ $schoolLogoUrl }}?v={{ $pwaVersion }}">
         @else
             <link rel="icon" href="/icons/icon-192x192.png?v={{ $pwaVersion }}" type="image/png">
             <link rel="shortcut icon" href="/icons/icon-192x192.png?v={{ $pwaVersion }}">
