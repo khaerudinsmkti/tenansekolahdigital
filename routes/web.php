@@ -3,6 +3,7 @@
 use App\Http\Controllers\Central\CentralAdminController;
 use App\Http\Controllers\Central\CentralAuthController;
 use App\Http\Controllers\Central\CentralTutorialController;
+use App\Http\Controllers\Central\TenantBackupController;
 use App\Http\Controllers\Central\TenantController;
 use App\Http\Controllers\Central\TenantUserController;
 use App\Http\Controllers\WelcomeController;
@@ -44,6 +45,13 @@ foreach (config('tenancy.central_domains', []) as $domain) {
 
             Route::post('/tenants/migrate-all', [TenantController::class, 'migrateAll'])->name('central.tenants.migrate-all');
             Route::post('/tenants/{tenant}/migrate', [TenantController::class, 'migrate'])->name('central.tenants.migrate');
+
+            Route::get('/tenants/{tenant}/backups', [TenantBackupController::class, 'index'])->name('central.tenants.backups.index');
+            Route::post('/tenants/{tenant}/backups', [TenantBackupController::class, 'store'])->name('central.tenants.backups.store');
+            Route::get('/tenants/{tenant}/backups/{filename}/download', [TenantBackupController::class, 'download'])->name('central.tenants.backups.download');
+            Route::post('/tenants/{tenant}/backups/{filename}/restore', [TenantBackupController::class, 'restore'])->name('central.tenants.backups.restore');
+            Route::post('/tenants/{tenant}/restore-upload', [TenantBackupController::class, 'restoreUpload'])->name('central.tenants.backups.upload');
+            Route::delete('/tenants/{tenant}/backups/{filename}', [TenantBackupController::class, 'destroy'])->name('central.tenants.backups.destroy');
 
             Route::post('/tenants/{tenant}/domains', [TenantController::class, 'storeDomain'])->name('central.domains.store');
             Route::delete('/domains/{domain}', [TenantController::class, 'destroyDomain'])->name('central.domains.destroy');

@@ -6,8 +6,10 @@ import {
     Copy,
     CreditCard,
     Database,
+    Download,
     ExternalLink,
     Globe,
+    HardDrive,
     Home,
     Image as ImageIcon,
     Layers,
@@ -17,6 +19,7 @@ import {
     PlayCircle,
     Plus,
     RefreshCw,
+    RotateCcw,
     School,
     Search,
     Server,
@@ -86,6 +89,13 @@ interface TenantUserItem {
     nip: string | null;
     role: 'admin' | 'principal';
     created_at: string | null;
+}
+
+interface TenantBackupItem {
+    filename: string;
+    size: number;
+    size_human: string;
+    created_at: string;
 }
 
 interface ThemeOption {
@@ -305,6 +315,17 @@ export default function CentralDashboard({
 
     // License modal states
     const [licenseTenant, setLicenseTenant] = useState<TenantItem | null>(null);
+
+    // Backup & Restore modal states
+    const [backupTenant, setBackupTenant] = useState<TenantItem | null>(null);
+    const [tenantBackups, setTenantBackups] = useState<TenantBackupItem[]>([]);
+    const [loadingBackups, setLoadingBackups] = useState(false);
+    const [creatingBackup, setCreatingBackup] = useState(false);
+    const [restoringFilename, setRestoringFilename] = useState<string | null>(
+        null,
+    );
+    const [uploadingRestore, setUploadingRestore] = useState(false);
+    const [restoreFile, setRestoreFile] = useState<File | null>(null);
     const licenseForm = useForm<{
         license_starts_at: string;
         license_expires_at: string;
@@ -826,6 +847,167 @@ export default function CentralDashboard({
             toast.error('Terjadi kesalahan saat menghapus user.');
         } finally {
             setDeletingUserId(null);
+        }
+    };
+
+    const openBackupModal = async (tenant: TenantItem) => {
+        setBackupTenant(tenant);
+        setRestoreFile(null);
+        setLoadingBackups(true);
+        setTenantBackups([]);
+
+        try {
+            const response = await fetch(
+                `/admin/tenants/${tenant.id}/backups`,
+                { headers: { Accept: 'application/json' } },
+            );
+            const data = (await response.json()) as {
+                backups?: TenantBackupItem[];
+            };
+            setTenantBackups(data.backups ?? []);
+        } catch {
+            toast.error('Gagal memuat daftar backup.');
+        } finally {
+            setLoadingBackups(false);
+        }
+    };
+
+    const handleCreateBackup = async () => {
+        if (!backupTenant) return;
+        setCreatingBackup(true);
+
+        try {
+            const response = await fetch(
+                `/admin/tenants/${backupTenant.id}/backups`,
+                {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN': getCsrfToken(),
+                    },
+                },
+            );
+            const data = (await response.json()) as {
+                backup?: TenantBackupItem;
+                message?: string;
+            };
+            if (!response.ok) {
+                toast.error(data.message || 'Gagal membuat backup.');
+                return;
+            }
+            if (data.backup) {
+                setTenantBackups((prev) => [data.backup!, ...prev]);
+            }
+            toast.success(data.message || 'Backup berhasil dibuat.');
+        } catch {
+            toast.error('Terjadi kesalahan saat membuat backup.');
+        } finally {
+            setCreatingBackup(false);
+        }
+    };
+
+    const handleRestoreBackup = async (filename: string) => {
+        if (!backupTenant) return;
+        if (
+            !window.confirm(
+                `Restore database ${backupTenant.database} dari ${filename}? Data saat ini akan ditimpa.`,
+            )
+        ) {
+            return;
+        }
+
+        setRestoringFilename(filename);
+        try {
+            const response = await fetch(
+                `/admin/tenants/${backupTenant.id}/backups/${encodeURIComponent(filename)}/restore`,
+                {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN': getCsrfToken(),
+                    },
+                },
+            );
+            const data = (await response.json()) as { message?: string };
+            if (!response.ok) {
+                toast.error(data.message || 'Gagal restore database.');
+                return;
+            }
+            toast.success(data.message || 'Database berhasil di-restore.');
+        } catch {
+            toast.error('Terjadi kesalahan saat restore database.');
+        } finally {
+            setRestoringFilename(null);
+        }
+    };
+
+    const handleUploadRestore = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!backupTenant || !restoreFile) return;
+
+        if (
+            !window.confirm(
+                `Restore database ${backupTenant.database} dari file ${restoreFile.name}? Data saat ini akan ditimpa.`,
+            )
+        ) {
+            return;
+        }
+
+        setUploadingRestore(true);
+        try {
+            const formData = new FormData();
+            formData.append('sql_file', restoreFile);
+
+            const response = await fetch(
+                `/admin/tenants/${backupTenant.id}/restore-upload`,
+                {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN': getCsrfToken(),
+                    },
+                    body: formData,
+                },
+            );
+            const data = (await response.json()) as { message?: string };
+            if (!response.ok) {
+                toast.error(data.message || 'Gagal restore dari file.');
+                return;
+            }
+            setRestoreFile(null);
+            toast.success(data.message || 'Database berhasil di-restore.');
+        } catch {
+            toast.error('Terjadi kesalahan saat upload & restore.');
+        } finally {
+            setUploadingRestore(false);
+        }
+    };
+
+    const handleDeleteBackup = async (filename: string) => {
+        if (!backupTenant) return;
+
+        try {
+            const response = await fetch(
+                `/admin/tenants/${backupTenant.id}/backups/${encodeURIComponent(filename)}`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN': getCsrfToken(),
+                    },
+                },
+            );
+            const data = (await response.json()) as { message?: string };
+            if (!response.ok) {
+                toast.error(data.message || 'Gagal menghapus backup.');
+                return;
+            }
+            setTenantBackups((prev) =>
+                prev.filter((b) => b.filename !== filename),
+            );
+            toast.success(data.message || 'Backup dihapus.');
+        } catch {
+            toast.error('Terjadi kesalahan saat menghapus backup.');
         }
     };
 
@@ -2237,6 +2419,16 @@ export default function CentralDashboard({
                                                 Migrate
                                             </Button>
                                             <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() =>
+                                                    void openBackupModal(tenant)
+                                                }
+                                            >
+                                                <HardDrive className="mr-1.5 h-3.5 w-3.5" />
+                                                Backup
+                                            </Button>
+                                            <Button
                                                 variant="ghost"
                                                 size="icon"
                                                 className="h-8 w-8"
@@ -3507,6 +3699,188 @@ export default function CentralDashboard({
                                 ))}
                             </div>
                         )}
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal: Backup & Restore Database Tenant */}
+            <Dialog
+                open={Boolean(backupTenant)}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setBackupTenant(null);
+                        setRestoreFile(null);
+                    }
+                }}
+            >
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <HardDrive className="h-5 w-5 text-[var(--brand-primary,#FF6B35)]" />
+                            Backup & Restore Database
+                        </DialogTitle>
+                        <DialogDescription>
+                            Kelola backup SQL dan restore untuk{' '}
+                            <span className="font-semibold text-gray-900 dark:text-white">
+                                {backupTenant?.name}
+                            </span>{' '}
+                            (<span className="font-mono">{backupTenant?.database}</span>).
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-5">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div className="flex flex-col justify-between rounded-2xl border border-[#E8E8E8] bg-[#FFFBF7] p-4 dark:border-[#2D234A] dark:bg-[#130E24]">
+                                <div>
+                                    <div className="text-xs font-black text-gray-900 dark:text-white">
+                                        Buat Backup Baru
+                                    </div>
+                                    <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                                        Ekspor seluruh tabel & data ke file{' '}
+                                        <span className="font-mono">.sql</span>{' '}
+                                        di server.
+                                    </p>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="primary"
+                                    size="sm"
+                                    disabled={creatingBackup}
+                                    onClick={() => void handleCreateBackup()}
+                                    className="mt-3 w-full rounded-xl font-bold shadow-brand"
+                                >
+                                    <Database className="mr-1.5 h-3.5 w-3.5" />
+                                    {creatingBackup
+                                        ? 'Membackup...'
+                                        : 'Buat Backup Sekarang'}
+                                </Button>
+                            </div>
+
+                            <form
+                                onSubmit={handleUploadRestore}
+                                className="flex flex-col justify-between rounded-2xl border border-[#E8E8E8] bg-[#FFFBF7] p-4 dark:border-[#2D234A] dark:bg-[#130E24]"
+                            >
+                                <div className="space-y-2">
+                                    <div className="text-xs font-black text-gray-900 dark:text-white">
+                                        Restore dari File .sql
+                                    </div>
+                                    <Input
+                                        type="file"
+                                        accept=".sql"
+                                        onChange={(e) =>
+                                            setRestoreFile(
+                                                e.target.files?.[0] ?? null,
+                                            )
+                                        }
+                                        className="h-9 cursor-pointer text-xs"
+                                    />
+                                </div>
+                                <Button
+                                    type="submit"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={!restoreFile || uploadingRestore}
+                                    className="mt-3 w-full rounded-xl font-bold"
+                                >
+                                    <Upload className="mr-1.5 h-3.5 w-3.5" />
+                                    {uploadingRestore
+                                        ? 'Merestore...'
+                                        : 'Upload & Restore'}
+                                </Button>
+                            </form>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="text-xs font-bold text-gray-500">
+                                Riwayat Backup Tersimpan ({tenantBackups.length})
+                            </div>
+
+                            {loadingBackups ? (
+                                <div className="py-8 text-center text-xs text-gray-500">
+                                    Memuat daftar backup...
+                                </div>
+                            ) : tenantBackups.length === 0 ? (
+                                <div className="rounded-2xl border border-dashed border-[#E8E8E8] py-8 text-center text-xs text-gray-500 dark:border-[#2D234A]">
+                                    Belum ada file backup tersimpan untuk tenan
+                                    ini.
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {tenantBackups.map((b) => (
+                                        <div
+                                            key={b.filename}
+                                            className="flex flex-col gap-2 rounded-2xl border border-[#E8E8E8] bg-white p-3 sm:flex-row sm:items-center sm:justify-between dark:border-[#2D234A] dark:bg-[#18122B]"
+                                        >
+                                            <div className="min-w-0">
+                                                <div className="truncate font-mono text-xs font-bold text-gray-900 dark:text-white">
+                                                    {b.filename}
+                                                </div>
+                                                <div className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400">
+                                                    {b.size_human} ·{' '}
+                                                    {new Date(
+                                                        b.created_at,
+                                                    ).toLocaleString('id-ID')}
+                                                </div>
+                                            </div>
+                                            <div className="flex shrink-0 items-center gap-1.5">
+                                                <Button
+                                                    asChild
+                                                    variant="outline"
+                                                    size="sm"
+                                                >
+                                                    <a
+                                                        href={`/admin/tenants/${backupTenant?.id}/backups/${encodeURIComponent(b.filename)}/download`}
+                                                    >
+                                                        <Download className="mr-1 h-3.5 w-3.5" />
+                                                        Unduh
+                                                    </a>
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    disabled={
+                                                        restoringFilename ===
+                                                        b.filename
+                                                    }
+                                                    onClick={() =>
+                                                        void handleRestoreBackup(
+                                                            b.filename,
+                                                        )
+                                                    }
+                                                >
+                                                    <RotateCcw
+                                                        className={`mr-1 h-3.5 w-3.5 ${
+                                                            restoringFilename ===
+                                                            b.filename
+                                                                ? 'animate-spin'
+                                                                : ''
+                                                        }`}
+                                                    />
+                                                    {restoringFilename ===
+                                                    b.filename
+                                                        ? 'Restore...'
+                                                        : 'Restore'}
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-rose-500 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/50"
+                                                    onClick={() =>
+                                                        void handleDeleteBackup(
+                                                            b.filename,
+                                                        )
+                                                    }
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </DialogContent>
             </Dialog>
