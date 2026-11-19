@@ -54,6 +54,13 @@ foreach (config('tenancy.central_domains', []) as $domain) {
             Route::post('/tenants/{tenant}/restore-upload', [TenantBackupController::class, 'restoreUpload'])->name('central.tenants.backups.upload');
             Route::delete('/tenants/{tenant}/backups/{filename}', [TenantBackupController::class, 'destroy'])->name('central.tenants.backups.destroy');
 
+            Route::get('/tenants/{tenant}/storage-backups', [TenantBackupController::class, 'storageIndex'])->name('central.tenants.storage-backups.index');
+            Route::post('/tenants/{tenant}/storage-backups', [TenantBackupController::class, 'storageStore'])->name('central.tenants.storage-backups.store');
+            Route::get('/tenants/{tenant}/storage-backups/{filename}/download', [TenantBackupController::class, 'storageDownload'])->name('central.tenants.storage-backups.download');
+            Route::post('/tenants/{tenant}/storage-backups/{filename}/restore', [TenantBackupController::class, 'storageRestore'])->name('central.tenants.storage-backups.restore');
+            Route::post('/tenants/{tenant}/storage-restore-upload', [TenantBackupController::class, 'storageRestoreUpload'])->name('central.tenants.storage-backups.upload');
+            Route::delete('/tenants/{tenant}/storage-backups/{filename}', [TenantBackupController::class, 'storageDestroy'])->name('central.tenants.storage-backups.destroy');
+
             Route::post('/auto-backup/settings', [TenantBackupController::class, 'updateAutoBackupSettings'])->name('central.auto-backup.settings');
             Route::post('/auto-backup/run-now', [TenantBackupController::class, 'runAllNow'])->name('central.auto-backup.run-now');
 
