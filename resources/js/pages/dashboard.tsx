@@ -86,6 +86,12 @@ interface DashboardProps {
         yearly: AttendanceRecapItem;
     };
     top_students?: {
+        daily: {
+            terlambat: TopStudentItem[];
+            sakit: TopStudentItem[];
+            izin: TopStudentItem[];
+            alpha: TopStudentItem[];
+        };
         monthly: {
             terlambat: TopStudentItem[];
             sakit: TopStudentItem[];
@@ -201,7 +207,14 @@ export default function Dashboard({
         return () => clearInterval(timer);
     }, []);
 
-    const [topPeriod, setTopPeriod] = useState<'yearly' | 'monthly'>('yearly');
+    const [topPeriod, setTopPeriod] = useState<'daily' | 'monthly' | 'yearly'>('yearly');
+
+    const topPeriodLabel =
+        topPeriod === 'daily'
+            ? `Harian (${formattedDate})`
+            : topPeriod === 'monthly'
+              ? 'Bulan Ini'
+              : 'Tahun Ini';
 
     // State untuk expand/collapse daftar kelas belum absensi jika lebih dari 8 rombel
     const [isUnmarkedExpanded, setIsUnmarkedExpanded] = useState(false);
@@ -751,8 +764,19 @@ export default function Dashboard({
                             </p>
                         </div>
 
-                        {/* Toggle Periode Top Siswa (Bulan Ini vs Tahun Ini) */}
+                        {/* Toggle Periode Top Siswa (Harian vs Bulan Ini vs Tahun Ini) */}
                         <div className="inline-flex rounded-xl bg-gray-100 p-1 dark:bg-[#1E1735] self-start sm:self-auto border border-gray-200/60 dark:border-gray-800">
+                            <button
+                                type="button"
+                                onClick={() => setTopPeriod('daily')}
+                                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                                    topPeriod === 'daily'
+                                        ? 'bg-white text-[var(--brand-primary,#FF6B35)] shadow-xs dark:bg-[#2A2045] dark:text-white'
+                                        : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                                }`}
+                            >
+                                Harian
+                            </button>
                             <button
                                 type="button"
                                 onClick={() => setTopPeriod('monthly')}
@@ -783,7 +807,7 @@ export default function Dashboard({
                         {/* 1. Telat */}
                         {renderTopCard({
                             title: 'Terbanyak Telat',
-                            subtitle: `Siswa terlambat (${topPeriod === 'monthly' ? 'Bulan Ini' : 'Tahun Ini'})`,
+                            subtitle: `Siswa terlambat (${topPeriodLabel})`,
                             icon: Clock,
                             accentColor: 'purple',
                             items: currentTopData.terlambat,
@@ -794,7 +818,7 @@ export default function Dashboard({
                         {/* 2. Sakit */}
                         {renderTopCard({
                             title: 'Terbanyak Sakit',
-                            subtitle: `Siswa sakit (${topPeriod === 'monthly' ? 'Bulan Ini' : 'Tahun Ini'})`,
+                            subtitle: `Siswa sakit (${topPeriodLabel})`,
                             icon: Activity,
                             accentColor: 'amber',
                             items: currentTopData.sakit,
@@ -804,7 +828,7 @@ export default function Dashboard({
                         {/* 3. Izin */}
                         {renderTopCard({
                             title: 'Terbanyak Izin',
-                            subtitle: `Siswa izin (${topPeriod === 'monthly' ? 'Bulan Ini' : 'Tahun Ini'})`,
+                            subtitle: `Siswa izin (${topPeriodLabel})`,
                             icon: FileText,
                             accentColor: 'blue',
                             items: currentTopData.izin,
@@ -814,7 +838,7 @@ export default function Dashboard({
                         {/* 4. Alpha */}
                         {renderTopCard({
                             title: 'Terbanyak Alpa',
-                            subtitle: `Siswa tanpa ket. (${topPeriod === 'monthly' ? 'Bulan Ini' : 'Tahun Ini'})`,
+                            subtitle: `Siswa tanpa ket. (${topPeriodLabel})`,
                             icon: UserX,
                             accentColor: 'rose',
                             items: currentTopData.alpha,

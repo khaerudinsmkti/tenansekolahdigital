@@ -243,8 +243,9 @@ class DashboardController extends Controller
             'total_records' => $yRecords,
         ];
 
-        // 4. Top Students (Single grouped query for both Monthly & Yearly across all 4 categories)
+        // 4. Top Students (Single grouped query for Daily, Monthly & Yearly across all 4 categories)
         $topStudents = [
+            'daily' => ['terlambat' => [], 'sakit' => [], 'izin' => [], 'alpha' => []],
             'monthly' => ['terlambat' => [], 'sakit' => [], 'izin' => [], 'alpha' => []],
             'yearly' => ['terlambat' => [], 'sakit' => [], 'izin' => [], 'alpha' => []],
         ];
@@ -273,24 +274,35 @@ class DashboardController extends Controller
                     SUM(CASE WHEN attendances.date BETWEEN ? AND ? AND attendances.is_late = 1 THEN attendances.late_minutes ELSE 0 END) as m_minutes,
                     SUM(CASE WHEN attendances.date BETWEEN ? AND ? AND attendances.status = 'sick' THEN 1 ELSE 0 END) as m_sakit,
                     SUM(CASE WHEN attendances.date BETWEEN ? AND ? AND attendances.status = 'permit' THEN 1 ELSE 0 END) as m_izin,
-                    SUM(CASE WHEN attendances.date BETWEEN ? AND ? AND attendances.status = 'absent' THEN 1 ELSE 0 END) as m_alpha
+                    SUM(CASE WHEN attendances.date BETWEEN ? AND ? AND attendances.status = 'absent' THEN 1 ELSE 0 END) as m_alpha,
+
+                    SUM(CASE WHEN attendances.date = ? AND attendances.is_late = 1 THEN 1 ELSE 0 END) as d_terlambat,
+                    SUM(CASE WHEN attendances.date = ? AND attendances.is_late = 1 THEN attendances.late_minutes ELSE 0 END) as d_minutes,
+                    SUM(CASE WHEN attendances.date = ? AND attendances.status = 'sick' THEN 1 ELSE 0 END) as d_sakit,
+                    SUM(CASE WHEN attendances.date = ? AND attendances.status = 'permit' THEN 1 ELSE 0 END) as d_izin,
+                    SUM(CASE WHEN attendances.date = ? AND attendances.status = 'absent' THEN 1 ELSE 0 END) as d_alpha
                 ", [
                     $monthStart, $monthEnd,
                     $monthStart, $monthEnd,
                     $monthStart, $monthEnd,
                     $monthStart, $monthEnd,
                     $monthStart, $monthEnd,
+                    $date, $date, $date, $date, $date,
                 ])
                 ->get();
 
             if ($studentAggs->isNotEmpty()) {
-                $pickTop5 = fn (string $col) => $studentAggs
+                $pickTop5 = fn (string $col, ?string $sortCol = null) => $studentAggs
                     ->where($col, '>', 0)
-                    ->sortByDesc($col)
+                    ->sortByDesc($sortCol ?? $col)
                     ->take(5)
                     ->values();
 
                 $buckets = [
+                    'd_terlambat' => $pickTop5('d_terlambat', 'd_minutes'),
+                    'd_sakit' => $pickTop5('d_sakit'),
+                    'd_izin' => $pickTop5('d_izin'),
+                    'd_alpha' => $pickTop5('d_alpha'),
                     'm_terlambat' => $pickTop5('m_terlambat'),
                     'm_sakit' => $pickTop5('m_sakit'),
                     'm_izin' => $pickTop5('m_izin'),
@@ -338,6 +350,12 @@ class DashboardController extends Controller
                 };
 
                 $topStudents = [
+                    'daily' => [
+                        'terlambat' => $formatBucket($buckets['d_terlambat'], 'd_terlambat', 'd_minutes'),
+                        'sakit' => $formatBucket($buckets['d_sakit'], 'd_sakit'),
+                        'izin' => $formatBucket($buckets['d_izin'], 'd_izin'),
+                        'alpha' => $formatBucket($buckets['d_alpha'], 'd_alpha'),
+                    ],
                     'monthly' => [
                         'terlambat' => $formatBucket($buckets['m_terlambat'], 'm_terlambat', 'm_minutes'),
                         'sakit' => $formatBucket($buckets['m_sakit'], 'm_sakit'),
