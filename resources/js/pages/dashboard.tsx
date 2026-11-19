@@ -207,7 +207,7 @@ export default function Dashboard({
         return () => clearInterval(timer);
     }, []);
 
-    const [topPeriod, setTopPeriod] = useState<'daily' | 'monthly' | 'yearly'>('yearly');
+    const [topPeriod, setTopPeriod] = useState<'daily' | 'monthly' | 'yearly'>('daily');
 
     const topPeriodLabel =
         topPeriod === 'daily'
