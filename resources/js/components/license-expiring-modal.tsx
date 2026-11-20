@@ -214,7 +214,7 @@ export function LicenseExpiringModal() {
                     >
                         <a href={waUrl} target="_blank" rel="noreferrer">
                             <MessageCircle className="mr-2 size-4" />
-                            Hubungi Admin Central via WhatsApp
+                            Hubungi Admin via WhatsApp
                         </a>
                     </Button>
                 </DialogFooter>
