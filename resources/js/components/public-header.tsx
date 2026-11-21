@@ -394,7 +394,7 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
                                     <span>
                                         {centralAdminAuthenticated
                                             ? 'Dashboard Admin'
-                                            : 'Masuk Admin'}
+                                            : 'Login'}
                                     </span>
                                     <ArrowRight className="ml-1 size-3.5" />
                                 </Link>
@@ -518,7 +518,7 @@ export function PublicHeader({ onOpenCreateNews }: PublicHeaderProps) {
                                                 <LogIn className="size-5" />
                                                 <div className="text-left leading-tight">
                                                     <div className="text-xs">
-                                                        {centralAdminAuthenticated ? 'Buka Dashboard Admin' : 'Masuk Admin Central'}
+                                                        {centralAdminAuthenticated ? 'Buka Dashboard Admin' : 'Login'}
                                                     </div>
                                                     <div className="text-[10px] font-normal text-white/80">
                                                         Kelola Sekolah, Subdomain & Domain

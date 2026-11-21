@@ -163,17 +163,18 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
-     * Get pending attendance status for today.
-     * Evaluates whether this teacher has classes that haven't been marked today.
+     * Get pending attendance status for today (or specified date).
+     * Evaluates whether this teacher has classes that haven't been marked on an active school day.
      */
-    public function getPendingAttendanceStatus(): ?array
+    public function getPendingAttendanceStatus(?string $date = null): ?array
     {
         // Pengingat khusus untuk peran guru (teacher)
         if ($this->role !== 'teacher') {
             return null;
         }
 
-        $today = Carbon::today()->toDateString();
+        $targetDate = $date ? Carbon::parse($date) : Carbon::today();
+        $today = $targetDate->toDateString();
 
         // 1. Cek apakah hari ini adalah hari libur sekolah / akhir pekan libur
         $offDay = AcademicHoliday::getOffDay($today);
@@ -184,7 +185,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
                 'holiday_name' => $offDay->name,
                 'pending_classes' => [],
                 'date' => $today,
-                'formatted_date' => now()->translatedFormat('l, d F Y'),
+                'formatted_date' => $targetDate->translatedFormat('l, d F Y'),
             ];
         }
 
@@ -263,7 +264,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'holiday_name' => null,
             'pending_classes' => $pendingClasses,
             'date' => $today,
-            'formatted_date' => now()->translatedFormat('l, d F Y'),
+            'formatted_date' => $targetDate->translatedFormat('l, d F Y'),
         ];
     }
 }

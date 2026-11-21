@@ -67,6 +67,37 @@ function playNotificationChime() {
     }
 }
 
+function isActiveSchoolDay(
+    pendingDate?: string,
+    schoolDaysPerWeek?: number,
+    isHoliday?: boolean,
+): boolean {
+    if (isHoliday) return false;
+
+    const now = new Date();
+    const day = now.getDay(); // 0 = Minggu, 6 = Sabtu
+
+    // Hari Minggu selalu libur
+    if (day === 0) return false;
+
+    // Hari Sabtu libur jika pengaturan 5 hari sekolah
+    if (day === 6 && Number(schoolDaysPerWeek ?? 6) === 5) {
+        return false;
+    }
+
+    // Pastikan data pending_attendance berasal dari tanggal hari ini (cegah tab lama dari kemarin memicu notifikasi di hari libur)
+    if (pendingDate) {
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        if (pendingDate !== `${yyyy}-${mm}-${dd}`) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 export function AttendanceReminder() {
     const { auth, school } = usePage<{
         auth: Auth;
@@ -78,6 +109,8 @@ export function AttendanceReminder() {
             pwa_reminder_title?: string;
             pwa_reminder_message?: string;
             pwa_sound_enabled?: boolean;
+            school_days_per_week?: number;
+            is_saturday_holiday?: boolean;
             logo_url?: string | null;
         };
     }>().props;
@@ -98,8 +131,14 @@ export function AttendanceReminder() {
     const needsAttendance = Boolean(
         isReminderEnabled &&
         isTeacher &&
+        !pendingAttendance?.is_holiday &&
         pendingAttendance?.needs_attendance &&
-        pendingAttendance.pending_classes.length > 0
+        pendingAttendance.pending_classes.length > 0 &&
+        isActiveSchoolDay(
+            pendingAttendance.date,
+            school?.school_days_per_week,
+            pendingAttendance.is_holiday,
+        )
     );
 
     // Storage key unik untuk user dan tanggal hari ini
@@ -109,6 +148,18 @@ export function AttendanceReminder() {
 
     const showReminderNotification = () => {
         if (!needsAttendance || !storageKey || !pendingAttendance) return;
+
+        // Pastikan hari ini masih hari aktif sekolah (bukan hari libur / lewat tengah malam)
+        if (
+            !isActiveSchoolDay(
+                pendingAttendance.date,
+                school?.school_days_per_week,
+                pendingAttendance.is_holiday,
+            )
+        ) {
+            setIsOpen(false);
+            return;
+        }
 
         // Cek jam operasional
         if (!isWithinActiveHours(school?.pwa_reminder_start_time, school?.pwa_reminder_end_time)) {

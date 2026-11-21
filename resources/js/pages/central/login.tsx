@@ -81,15 +81,13 @@ export default function CentralLogin({ captchaSvg }: CentralLoginProps) {
 
                             <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-[#FFF0EB] px-3.5 py-1 text-xs font-bold text-[#FF6B35] dark:bg-[#331C1A] dark:text-[#FF8C5A]">
                                 <span className="size-1.5 rounded-full bg-[#FF6B35]" />
-                                Central Tenancy Hub
+                                Sekolah Digital Indonesia
                             </div>
 
                             <h1 className="text-xl font-black tracking-tight text-gray-900 dark:text-white">
-                                Masuk Admin Central
-                            </h1>
+                       Login Admin</h1>
                             <p className="mt-1.5 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-                                Kelola sekolah, subdomain, custom domain, dan
-                                database multi-tenant dalam satu panel.
+
                             </p>
                         </div>
 
